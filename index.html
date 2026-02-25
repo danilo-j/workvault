@@ -239,6 +239,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div class="nav-label">Sekcije</div>
       <div class="nav-item active" onclick="showPage('payments')" id="nav-payments"><span class="nav-icon">💳</span>Plaćanja<span class="nav-badge" id="badge-payments">0</span></div>
       <div class="nav-item" onclick="showPage('jobs')" id="nav-jobs"><span class="nav-icon">🔧</span>Poslovi<span class="nav-badge" id="badge-jobs">0</span></div>
+      <div class="nav-item" onclick="showPage('racun')" id="nav-racun"><span class="nav-icon">🏦</span>Račun<span class="nav-badge" id="badge-racun-saldo" style="background:var(--blue)">€0</span></div>
       <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence"><span class="nav-icon">📋</span>Evidencija<span class="nav-badge" id="badge-evidence">0</span></div>
       <div class="nav-item" onclick="showPage('reports')" id="nav-reports"><span class="nav-icon">📊</span>Izvještaji</div>
     </div>
@@ -322,6 +323,69 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
             <th></th>
           </tr></thead>
           <tbody id="jobs-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+
+    <!-- RACUN PAGE -->
+    <div class="page" id="page-racun">
+      <div class="page-header">
+        <div><div class="page-eyebrow">Finansije</div><div class="page-title">Bankovni račun</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="openRacunSetup()">⚙ Postavke</button>
+          <button class="btn btn-primary" onclick="openModal('modal-racun-tx')">＋ Dodaj transakciju</button>
+        </div>
+      </div>
+      <!-- SALDO HERO -->
+      <div style="background:var(--accent);border-radius:16px;padding:28px 32px;margin-bottom:20px;color:white;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(45,106,79,.3)">
+        <div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:8px">Trenutni saldo</div>
+          <div style="font-family:var(--serif);font-size:42px;font-weight:700;letter-spacing:-1px" id="racun-saldo-hero">€0.00</div>
+          <div style="font-size:12px;opacity:.6;margin-top:6px" id="racun-saldo-sub">Početni saldo: €0</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;opacity:.7;margin-bottom:4px">Ukupno uplaćeno</div>
+          <div style="font-size:22px;font-weight:700" id="racun-total-in">€0</div>
+          <div style="font-size:12px;opacity:.7;margin-top:10px;margin-bottom:4px">Ukupno isplaćeno</div>
+          <div style="font-size:22px;font-weight:700" id="racun-total-out">€0</div>
+        </div>
+      </div>
+      <div class="stats-row stats-row-4" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Plate sebi</div><div class="stat-value amber" id="racun-stat-plate">€0</div></div>
+        <div class="stat-card"><div class="stat-label">Naplata poslova</div><div class="stat-value green" id="racun-stat-naplata">€0</div></div>
+        <div class="stat-card"><div class="stat-label">Ostale uplate</div><div class="stat-value blue" id="racun-stat-ostale">€0</div></div>
+        <div class="stat-card"><div class="stat-label">Ostali troškovi</div><div class="stat-value purple" id="racun-stat-troskovi">€0</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <span class="table-toolbar-title">Transakcije računa</span>
+          <input class="search-input" placeholder="🔍 Pretraži..." oninput="renderRacun()" id="search-racun">
+          <select class="filter-select" onchange="renderRacun()" id="filter-racun-type">
+            <option value="">Sve</option>
+            <option value="uplata">Uplate</option>
+            <option value="isplata">Isplate</option>
+          </select>
+          <select class="filter-select" onchange="renderRacun()" id="filter-racun-kat">
+            <option value="">Sve kategorije</option>
+            <option value="plata">Plata sebi</option>
+            <option value="naplata">Naplata posla</option>
+            <option value="ostalo-in">Ostala uplata</option>
+            <option value="troskovi">Troškovi</option>
+            <option value="ostalo-out">Ostala isplata</option>
+          </select>
+        </div>
+        <div class="tbl-outer"><table>
+          <thead><tr>
+            <th onclick="setSort('racunTx','date')">Datum<span class="si">↕</span></th>
+            <th onclick="setSort('racunTx','desc')">Opis<span class="si">↕</span></th>
+            <th>Kategorija</th>
+            <th onclick="setSort('racunTx','type')">Tip<span class="si">↕</span></th>
+            <th onclick="setSort('racunTx','amount')">Iznos<span class="si">↕</span></th>
+            <th>Saldo nakon</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="racun-tbody"></tbody>
         </table></div>
       </div>
     </div>
@@ -446,6 +510,85 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
   </div>
 </div>
 
+
+<!-- MODAL: RACUN TRANSAKCIJA -->
+<div class="modal-overlay" id="modal-racun-tx">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="racun-tx-title">Nova transakcija</div><button class="modal-close" onclick="closeModal('modal-racun-tx')">✕</button></div>
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label>Datum</label><input type="date" id="rt-date"></div>
+      <div class="form-group"><label>Tip</label>
+        <select id="rt-type" onchange="updateRacunKat()">
+          <option value="uplata">Uplata (prihod)</option>
+          <option value="isplata">Isplata (rashod)</option>
+        </select>
+      </div>
+      <div class="form-group full"><label>Opis</label><input type="text" id="rt-desc" placeholder="Opis transakcije"></div>
+      <div class="form-group"><label>Kategorija</label>
+        <select id="rt-kat">
+          <option value="naplata">Naplata posla</option>
+          <option value="ostalo-in">Ostala uplata</option>
+          <option value="plata">Plata sebi</option>
+          <option value="troskovi">Troškovi</option>
+          <option value="ostalo-out">Ostala isplata</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Iznos (€)</label><input type="number" id="rt-amount" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group full"><label>Napomena</label><input type="text" id="rt-note" placeholder="Opciona napomena..."></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-racun-tx')">Otkaži</button>
+      <button class="btn btn-primary" onclick="saveRacunTx()">Sačuvaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RACUN SETUP -->
+<div class="modal-overlay" id="modal-racun-setup">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Postavke računa</div><button class="modal-close" onclick="closeModal('modal-racun-setup')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Početni saldo računa (€)</label><input type="number" id="setup-saldo" placeholder="0.00" step="0.01"></div>
+      <div class="form-group"><label>Naziv računa (opciono)</label><input type="text" id="setup-naziv" placeholder="npr. Hipotekarna banka"></div>
+    </div>
+    <div style="background:var(--amber-light);border:1px solid rgba(180,83,9,.3);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--amber);margin-top:8px">
+      ⚠ Početni saldo je iznos koji je već bio na računu prije nego ste počeli pratiti transakcije.
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-racun-setup')">Otkaži</button>
+      <button class="btn btn-primary" onclick="saveRacunSetup()">Sačuvaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NAPLATI POSAO -->
+<div class="modal-overlay" id="modal-naplati">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Naplati posao</div><button class="modal-close" onclick="closeModal('modal-naplati')">✕</button></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px" id="naplati-job-info"></div>
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label>Datum naplate</label><input type="date" id="naplati-date"></div>
+      <div class="form-group"><label>Iznos (€)</label><input type="number" id="naplati-amount" step="0.01" min="0"></div>
+      <div class="form-group full"><label>Opis plaćanja</label><input type="text" id="naplati-desc"></div>
+      <div class="form-group full">
+        <label>Dodaj i u:</label>
+        <div style="display:flex;gap:12px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:400">
+            <input type="checkbox" id="naplati-placanja" checked style="width:auto"> Plaćanja (opšti prihod)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:400">
+            <input type="checkbox" id="naplati-racun" style="width:auto"> Bankovni račun
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-naplati')">Otkaži</button>
+      <button class="btn btn-primary" onclick="confirmNaplati()">Naplati ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- MODAL IMPORT -->
@@ -503,10 +646,10 @@ const DRIVE_FILE_NAME='workvault-data.json';
 const MONTHS=['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
 
 let accessToken=null,driveFileId=null;
-let DB={payments:[],jobs:[],evidence:[]};
+let DB={payments:[],jobs:[],evidence:[],racun:{pocetniSaldo:0,transakcije:[]}};
 let tempFiles={fotografije:[],dwg:[],elaborat:[]};
 let editingId={payments:null,jobs:null,evidence:null};
-let sortState={payments:{col:'date',dir:-1},jobs:{col:'date',dir:-1},evidence:{col:'prezime',dir:1}};
+let sortState={payments:{col:'date',dir:-1},jobs:{col:'date',dir:-1},evidence:{col:'prezime',dir:1},racunTx:{col:'date',dir:-1}};
 let activeYear=null;
 let charts={};
 
@@ -529,7 +672,8 @@ function setSort(type,col){
 }
 function sortData(arr,col,dir){return[...arr].sort((a,b)=>{let va=a[col]??'',vb=b[col]??'';if(typeof va==='number')return(va-vb)*dir;return String(va).localeCompare(String(vb))*dir;});}
 function updateSortIcons(type){
-  document.querySelectorAll('#page-'+type+' th').forEach(th=>{
+  const pageId = type==='racunTx'?'racun':type;
+  document.querySelectorAll('#page-'+pageId+' th').forEach(th=>{
     const txt=th.onclick?.toString()||'';
     const m=txt.match(/'([^']+)'\)$/);
     const col=m?m[1]:null;
@@ -586,7 +730,7 @@ async function loadFromDrive(){
     const r=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
     if(!r.ok)throw new Error('Download failed');
     const d=await r.json();
-    if(d.payments)DB.payments=d.payments;if(d.jobs)DB.jobs=d.jobs;if(d.evidence)DB.evidence=d.evidence;
+    if(d.payments)DB.payments=d.payments;if(d.jobs)DB.jobs=d.jobs;if(d.evidence)DB.evidence=d.evidence;if(d.racun)DB.racun=d.racun;
     setDriveStatus('ok','Učitano · '+new Date().toLocaleTimeString('sr'));render();toast('✓ Podaci učitani!','green');
   }catch(err){setDriveStatus('','Greška');toast('Greška: '+err.message,'red');render();}
 }
@@ -600,10 +744,12 @@ function showPage(name){
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   if(name==='reports')renderReports();
+  if(name==='racun')renderRacun();
 }
 
 // MODALS
 function openModal(id,eid=null){
+  if(id==='modal-racun-tx'){openModal_racun_tx_new();return;}
   document.getElementById(id).classList.add('open');
   const dm={'modal-payment':'p-date','modal-job':'j-date'};
   const tm={'modal-payment':'payments','modal-job':'jobs','modal-evidence':'evidence'};
@@ -749,7 +895,7 @@ function renderJobs(){
   const ysel=document.getElementById('filter-j-year'),cy=ysel?.value;
   if(ysel){const yrs=getYears(DB.jobs);ysel.innerHTML='<option value="">Sve godine</option>'+yrs.map(y=>`<option value="${y}"${y===cy?' selected':''}>${y}</option>`).join('');}
   const tbody=document.getElementById('jobs-tbody');
-  tbody.innerHTML=d.length?d.map(j=>`<tr><td>${j.date}</td><td><strong>${j.name}</strong>${j.notes?`<div class="cell-secondary">${j.notes.substring(0,50)}${j.notes.length>50?'…':''}</div>`:''}</td><td>${j.client||'—'}</td><td><span class="badge ${pBadge[j.priority]||'badge-gray'}">${pLabel[j.priority]||j.priority}</span></td><td><span class="badge ${stBadge[j.status]||'badge-gray'}">${stLabel[j.status]||j.status}</span></td><td>${j.value?`<span class="amount">${fmt(j.value)}</span>`:'—'}</td><td><div class="td-actions"><button class="btn-edit" onclick="editJob(${j.id})">Izmijeni</button><button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Nema poslova.</div></div></td></tr>`;
+  tbody.innerHTML=d.length?d.map(j=>`<tr><td>${j.date}</td><td><strong>${j.name}</strong>${j.notes?`<div class="cell-secondary">${j.notes.substring(0,50)}${j.notes.length>50?'…':''}</div>`:''}</td><td>${j.client||'—'}</td><td><span class="badge ${pBadge[j.priority]||'badge-gray'}">${pLabel[j.priority]||j.priority}</span></td><td><span class="badge ${stBadge[j.status]||'badge-gray'}">${stLabel[j.status]||j.status}</span></td><td>${j.value?`<span class="amount">${fmt(j.value)}</span>`:'—'}</td><td><div class="td-actions"><button class="btn-card" onclick="openNaplati(${j.id})" style="color:var(--accent);border-color:var(--accent)" title="Naplati posao">€ Naplati</button><button class="btn-edit" onclick="editJob(${j.id})">Izmijeni</button><button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Nema poslova.</div></div></td></tr>`;
   document.getElementById('stat-jobs-total').textContent=DB.jobs.length;document.getElementById('stat-jobs-active').textContent=DB.jobs.filter(j=>j.status==='active').length;document.getElementById('stat-jobs-done').textContent=DB.jobs.filter(j=>j.status==='completed').length;document.getElementById('stat-jobs-value').textContent=fmt(DB.jobs.reduce((s,j)=>s+(j.value||0),0));
 }
 
@@ -1022,6 +1168,227 @@ function doImport(){
 }
 
 
+
+// =========================================================
+// RACUN (BANKOVNI RACUN)
+// =========================================================
+const RACUN_KAT_LABELS = {
+  'naplata':'Naplata posla','plata':'Plata sebi',
+  'ostalo-in':'Ostala uplata','troskovi':'Troškovi','ostalo-out':'Ostala isplata'
+};
+const RACUN_KAT_BADGE = {
+  'naplata':'badge-green','plata':'badge-amber',
+  'ostalo-in':'badge-blue','troskovi':'badge-red','ostalo-out':'badge-red'
+};
+
+function getRacunSaldo() {
+  const poc = DB.racun.pocetniSaldo || 0;
+  return DB.racun.transakcije.reduce((s,t) => t.type==='uplata' ? s+t.amount : s-t.amount, poc);
+}
+
+function getRacunSaldoAfter(idx, sorted) {
+  const poc = DB.racun.pocetniSaldo || 0;
+  // calculate running balance up to and including this index in chronological order
+  const chron = [...DB.racun.transakcije].sort((a,b)=>a.date.localeCompare(b.date));
+  let bal = poc;
+  const tx = sorted[idx];
+  for (const t of chron) {
+    bal += t.type==='uplata' ? t.amount : -t.amount;
+    if (t.id === tx.id) break;
+  }
+  return bal;
+}
+
+function openRacunSetup() {
+  document.getElementById('setup-saldo').value = DB.racun.pocetniSaldo || 0;
+  document.getElementById('setup-naziv').value = DB.racun.naziv || '';
+  document.getElementById('modal-racun-setup').classList.add('open');
+}
+
+function saveRacunSetup() {
+  DB.racun.pocetniSaldo = parseFloat(document.getElementById('setup-saldo').value) || 0;
+  DB.racun.naziv = document.getElementById('setup-naziv').value.trim();
+  closeModal('modal-racun-setup');
+  renderRacun(); autoSave();
+  toast('Postavke računa sačuvane.', 'green');
+}
+
+function updateRacunKat() {
+  const type = document.getElementById('rt-type').value;
+  const kat = document.getElementById('rt-kat');
+  if (type === 'uplata') {
+    kat.innerHTML = '<option value="naplata">Naplata posla</option><option value="ostalo-in">Ostala uplata</option>';
+  } else {
+    kat.innerHTML = '<option value="plata">Plata sebi</option><option value="troskovi">Troškovi</option><option value="ostalo-out">Ostala isplata</option>';
+  }
+}
+
+let editingRacunTxId = null;
+function openModal_racun_tx_new() {
+  editingRacunTxId = null;
+  document.getElementById('racun-tx-title').textContent = 'Nova transakcija';
+  document.getElementById('rt-date').value = today();
+  document.getElementById('rt-type').value = 'uplata';
+  updateRacunKat();
+  document.getElementById('rt-desc').value = '';
+  document.getElementById('rt-amount').value = '';
+  document.getElementById('rt-note').value = '';
+  document.getElementById('modal-racun-tx').classList.add('open');
+}
+
+function saveRacunTx() {
+  const date = document.getElementById('rt-date').value;
+  const desc = document.getElementById('rt-desc').value.trim();
+  const amount = parseFloat(document.getElementById('rt-amount').value);
+  if (!date || !desc || isNaN(amount) || amount <= 0) { toast('Popunite sva polja.', 'red'); return; }
+  const data = {
+    date, desc, amount,
+    type: document.getElementById('rt-type').value,
+    kat: document.getElementById('rt-kat').value,
+    note: document.getElementById('rt-note').value.trim()
+  };
+  if (editingRacunTxId) {
+    const idx = DB.racun.transakcije.findIndex(t=>t.id===editingRacunTxId);
+    if (idx!==-1) DB.racun.transakcije[idx] = {...DB.racun.transakcije[idx], ...data};
+    toast('Transakcija izmijenjena.', 'green');
+  } else {
+    DB.racun.transakcije.push({id: Date.now(), ...data});
+    toast('Transakcija dodana.', 'green');
+  }
+  closeModal('modal-racun-tx');
+  renderRacun(); autoSave();
+}
+
+function editRacunTx(id) {
+  const t = DB.racun.transakcije.find(x=>x.id===id); if(!t) return;
+  editingRacunTxId = id;
+  document.getElementById('racun-tx-title').textContent = 'Izmijeni transakciju';
+  document.getElementById('rt-date').value = t.date;
+  document.getElementById('rt-type').value = t.type;
+  updateRacunKat();
+  document.getElementById('rt-kat').value = t.kat;
+  document.getElementById('rt-desc').value = t.desc;
+  document.getElementById('rt-amount').value = t.amount;
+  document.getElementById('rt-note').value = t.note||'';
+  document.getElementById('modal-racun-tx').classList.add('open');
+}
+
+function renderRacun() {
+  const txAll = DB.racun.transakcije || [];
+  const poc = DB.racun.pocetniSaldo || 0;
+  const naziv = DB.racun.naziv || 'Bankovni račun';
+
+  // Stats
+  const totalIn  = txAll.filter(t=>t.type==='uplata').reduce((s,t)=>s+t.amount,0);
+  const totalOut = txAll.filter(t=>t.type==='isplata').reduce((s,t)=>s+t.amount,0);
+  const saldo = poc + totalIn - totalOut;
+
+  document.getElementById('racun-saldo-hero').textContent = fmt(saldo);
+  document.getElementById('racun-saldo-hero').style.color = saldo < 0 ? '#ffaaaa' : 'white';
+  document.getElementById('racun-saldo-sub').textContent = 'Početni saldo: '+fmt(poc)+' · '+naziv;
+  document.getElementById('racun-total-in').textContent = '+'+fmt(totalIn);
+  document.getElementById('racun-total-out').textContent = '-'+fmt(totalOut);
+
+  const plate   = txAll.filter(t=>t.kat==='plata').reduce((s,t)=>s+t.amount,0);
+  const naplata = txAll.filter(t=>t.kat==='naplata').reduce((s,t)=>s+t.amount,0);
+  const ostaleIn= txAll.filter(t=>t.kat==='ostalo-in').reduce((s,t)=>s+t.amount,0);
+  const troskovi= txAll.filter(t=>t.kat==='troskovi'||t.kat==='ostalo-out').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('racun-stat-plate').textContent = fmt(plate);
+  document.getElementById('racun-stat-naplata').textContent = fmt(naplata);
+  document.getElementById('racun-stat-ostale').textContent = fmt(ostaleIn);
+  document.getElementById('racun-stat-troskovi').textContent = fmt(troskovi);
+
+  // Sidebar badge
+  const saldoShort = saldo >= 1000 ? '€'+(saldo/1000).toFixed(1)+'k' : fmt(saldo).replace('€','€');
+  document.getElementById('badge-racun-saldo').textContent = fmt(saldo);
+  document.getElementById('badge-racun-saldo').style.background = saldo < 0 ? 'var(--red)' : 'var(--blue)';
+
+  // Filter & sort
+  const s = (document.getElementById('search-racun')?.value||'').toLowerCase();
+  const tf = document.getElementById('filter-racun-type')?.value||'';
+  const kf = document.getElementById('filter-racun-kat')?.value||'';
+  let data = sortData(txAll, sortState.racunTx.col, sortState.racunTx.dir);
+  if(s) data = data.filter(t=>(t.desc||'').toLowerCase().includes(s)||(t.note||'').toLowerCase().includes(s));
+  if(tf) data = data.filter(t=>t.type===tf);
+  if(kf) data = data.filter(t=>t.kat===kf);
+  updateSortIcons('racunTx');
+
+  // Running balance — compute per row (sorted chronologically)
+  const chronMap = {};
+  let runBal = poc;
+  [...txAll].sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>{
+    runBal += t.type==='uplata' ? t.amount : -t.amount;
+    chronMap[t.id] = runBal;
+  });
+
+  const tbody = document.getElementById('racun-tbody');
+  tbody.innerHTML = data.length ? data.map(t=>`
+    <tr>
+      <td>${t.date}</td>
+      <td><strong>${t.desc}</strong>${t.note?`<div class="cell-secondary">${t.note}</div>`:''}</td>
+      <td><span class="badge ${RACUN_KAT_BADGE[t.kat]||'badge-gray'}">${RACUN_KAT_LABELS[t.kat]||t.kat}</span></td>
+      <td><span class="badge ${t.type==='uplata'?'badge-green':'badge-red'}">${t.type==='uplata'?'Uplata':'Isplata'}</span></td>
+      <td><span class="amount ${t.type==='uplata'?'pos':'neg'}">${t.type==='uplata'?'+':'-'}${fmt(t.amount)}</span></td>
+      <td><span class="amount" style="color:${(chronMap[t.id]||0)<0?'var(--red)':'var(--text2)'}">${fmt(chronMap[t.id]||0)}</span></td>
+      <td><div class="td-actions"><button class="btn-edit" onclick="editRacunTx(${t.id})">Izmijeni</button><button class="btn-del" onclick="delRacunTx(${t.id})">Obriši</button></div></td>
+    </tr>
+  `).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏦</div><div class="empty-text">Nema transakcija. Dodajte prvu transakciju ili podesite početni saldo.</div></div></td></tr>`;
+}
+
+function delRacunTx(id) {
+  if(!confirm('Obrisati ovu transakciju?')) return;
+  DB.racun.transakcije = DB.racun.transakcije.filter(t=>t.id!==id);
+  renderRacun(); autoSave(); toast('Transakcija obrisana.');
+}
+
+// =========================================================
+// NAPLATI POSAO
+// =========================================================
+let naplatiJobId = null;
+function openNaplati(jobId) {
+  const j = DB.jobs.find(x=>x.id===jobId); if(!j) return;
+  naplatiJobId = jobId;
+  document.getElementById('naplati-job-info').innerHTML = `
+    <div style="font-weight:600;font-size:14px;margin-bottom:4px">🔧 ${j.name}</div>
+    <div style="font-size:12px;color:var(--text3)">${j.client?'Klijent: '+j.client+' · ':''} Vrijednost posla: <strong style="color:var(--accent)">${fmt(j.value||0)}</strong></div>
+  `;
+  document.getElementById('naplati-date').value = today();
+  document.getElementById('naplati-amount').value = j.value || '';
+  document.getElementById('naplati-desc').value = (j.client||j.name) + ' — ' + j.name;
+  document.getElementById('naplati-placanja').checked = true;
+  document.getElementById('naplati-racun').checked = false;
+  document.getElementById('modal-naplati').classList.add('open');
+}
+
+function confirmNaplati() {
+  const date = document.getElementById('naplati-date').value;
+  const amount = parseFloat(document.getElementById('naplati-amount').value);
+  const desc = document.getElementById('naplati-desc').value.trim();
+  if (!date || isNaN(amount) || amount<=0 || !desc) { toast('Popunite sva polja.', 'red'); return; }
+
+  const addPlacanja = document.getElementById('naplati-placanja').checked;
+  const addRacun = document.getElementById('naplati-racun').checked;
+
+  if (!addPlacanja && !addRacun) { toast('Odaberite barem jedno mjesto za knjiženje.', 'red'); return; }
+
+  if (addPlacanja) {
+    DB.payments.push({ id: Date.now(), date, desc, category:'Usluge', method:'Bankovni transfer', type:'income', amount, jobId: naplatiJobId });
+  }
+  if (addRacun) {
+    DB.racun.transakcije.push({ id: Date.now()+1, date, desc, type:'uplata', kat:'naplata', amount, note:'Naplata posla', jobId: naplatiJobId });
+  }
+
+  // Mark job as completed if not already
+  const j = DB.jobs.find(x=>x.id===naplatiJobId);
+  if (j && j.status !== 'completed') {
+    if (confirm('Označiti posao kao Završen?')) j.status = 'completed';
+  }
+
+  closeModal('modal-naplati');
+  render(); autoSave();
+  toast('✓ Posao naplaćen! Prihod knjižen.', 'green');
+}
+
 // CSV
 function exportCSV(type){
   if(!DB[type].length){toast('Nema podataka.','red');return;}
@@ -1038,6 +1405,10 @@ function render(){
   document.getElementById('badge-payments').textContent=DB.payments.length;
   document.getElementById('badge-jobs').textContent=DB.jobs.length;
   document.getElementById('badge-evidence').textContent=DB.evidence.length;
+  // Update racun saldo badge
+  const racunSaldo=getRacunSaldo();
+  document.getElementById('badge-racun-saldo').textContent=fmt(racunSaldo);
+  document.getElementById('badge-racun-saldo').style.background=racunSaldo<0?'var(--red)':'var(--blue)';
 }
 
 // INIT
