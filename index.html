@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Epilogue:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Google APIs -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f7f6f3;
+  --bg2: #f0ede8;
+  --surface: #ffffff;
+  --surface2: #faf9f7;
+  --border: #e4e0d8;
+  --border2: #d4cfc5;
+  --accent: #2d6a4f;
+  --accent2: #40916c;
+  --accent-light: #d8f3dc;
+  --amber: #b45309;
+  --amber-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --blue: #1d4ed8;
+  --blue-light: #dbeafe;
+  --text: #1a1a1a;
+  --text2: #4a4a4a;
+  --text3: #8a8a8a;
+  --text4: #b8b8b8;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow2: 0 2px 8px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.06);
+  --serif: 'Playfair Display', serif;
+  --sans: 'Epilogue', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* LOGIN SCREEN */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 52px;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: var(--shadow2);
+  text-align: center;
+}
+.login-logo {
+  width: 56px; height: 56px;
+  background: var(--accent);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 20px;
+}
+.login-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.login-sub { font-size: 13px; color: var(--text3); margin-bottom: 32px; }
+.login-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+.login-info { font-size: 12px; color: var(--text3); line-height: 1.6; }
+.login-info strong { color: var(--text2); }
+
+/* GOOGLE BUTTON */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-google:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); box-shadow: 0 2px 12px rgba(45,106,79,0.12); }
+.google-icon { width: 20px; height: 20px; }
+
+/* APP LAYOUT */
+.app { display: none; }
+.app.visible { display: flex; }
+
+.sidebar {
+  width: 240px; min-width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+}
+.main { margin-left: 240px; flex: 1; min-height: 100vh; }
+
+/* LOGO */
+.logo { padding: 24px 24px 20px; border-bottom: 1px solid var(--border); }
+.logo-mark {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; margin-bottom: 10px;
+}
+.logo-name { font-family: var(--serif); font-size: 19px; font-weight: 700; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* USER CHIP */
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  margin: 8px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.user-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-name { font-size: 12px; font-weight: 600; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-signout {
+  font-size: 11px; color: var(--text3);
+  background: none; border: none; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px;
+  transition: all 0.15s;
+}
+.btn-signout:hover { color: var(--red); background: var(--red-light); }
+
+/* NAV */
+.nav-section { padding: 12px 14px 6px; }
+.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text4); padding: 0 10px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px;
+  cursor: pointer; color: var(--text2);
+  font-size: 13px; font-weight: 500;
+  transition: all 0.15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--accent); color: white;
+  font-size: 10px; font-weight: 600; padding: 1px 6px;
+  border-radius: 10px; min-width: 18px; text-align: center;
+}
+
+/* DRIVE STATUS */
+.drive-status {
+  margin: 6px 14px 10px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--text3);
+  display: flex; align-items: center; gap: 8px;
+}
+.drive-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text4); flex-shrink: 0; }
+.drive-dot.ok { background: var(--accent2); }
+.drive-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* SYNC BUTTONS */
+.sync-btns { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
+
+.sidebar-footer {
+  margin-top: auto; padding: 12px 20px;
+  font-size: 11px; color: var(--text4);
+  border-top: 1px solid var(--border);
+}
+
+/* PAGE */
+.page { display: none; padding: 36px 44px; animation: fadeUp 0.22s ease; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.page-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--border);
+}
+.page-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent2); margin-bottom: 4px; }
+.page-title { font-family: var(--serif); font-size: 30px; font-weight: 700; letter-spacing: -0.4px; }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow); }
+.stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
+.stat-value { font-family: var(--serif); font-size: 24px; font-weight: 700; color: var(--text); }
+.stat-value.green { color: var(--accent); }
+.stat-value.amber { color: var(--amber); }
+
+/* TABLE */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.table-toolbar-title { font-size: 13px; font-weight: 600; color: var(--text2); }
+.tbl-outer { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 600px; }
+th { text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); background: var(--surface2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 11px 14px; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fafaf8; }
+
+/* BADGE */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-green { background: var(--accent-light); color: var(--accent); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-gray { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent2); box-shadow: 0 2px 12px rgba(45,106,79,0.25); }
+.btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+.btn-del { background: transparent; color: var(--text4); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; border-radius: 5px; cursor: pointer; font-family: var(--sans); font-weight: 500; transition: all 0.15s; }
+.btn-del:hover { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+/* AMOUNT */
+.amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+.amount.pos { color: var(--accent); }
+.amount.neg { color: var(--red); }
+
+/* ATTACHMENTS */
+.att-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.att-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--blue-light); color: var(--blue); border-radius: 5px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid rgba(29,78,216,0.15); transition: all 0.15s; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-chip:hover { background: #bfdbfe; }
+
+/* EMPTY */
+.empty { text-align: center; padding: 52px 20px; }
+.empty-icon { font-size: 38px; margin-bottom: 10px; opacity: 0.4; }
+.empty-text { font-size: 14px; color: var(--text3); }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(3px); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; width: 560px; max-width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow2); animation: modalIn 0.2s ease; }
+.modal.wide { width: 700px; }
+@keyframes modalIn { from { opacity:0; transform:scale(0.97) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.modal-title { font-family: var(--serif); font-size: 21px; font-weight: 700; }
+.modal-close { background: var(--bg); border: 1px solid var(--border); color: var(--text3); width: 28px; height: 28px; border-radius: 7px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.modal-close:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+
+/* FORM */
+.form-grid { display: grid; gap: 13px; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1/-1; }
+label { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; color: var(--text3); }
+input[type=text], input[type=number], input[type=date], select, textarea { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-family: var(--sans); font-size: 13px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,106,79,0.08); }
+select option { background: white; }
+textarea { resize: vertical; min-height: 70px; }
+.form-divider { grid-column: 1/-1; border: none; border-top: 1px solid var(--border); margin: 2px 0; }
+
+/* FILE UPLOAD */
+.file-zone { border: 2px dashed var(--border2); border-radius: 8px; padding: 14px; text-align: center; cursor: pointer; transition: all 0.15s; position: relative; background: var(--surface2); }
+.file-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+.file-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.file-zone-icon { font-size: 18px; margin-bottom: 3px; }
+.file-zone-text { font-size: 11px; color: var(--text3); }
+.file-preview { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.file-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; color: var(--text2); max-width: 180px; }
+.file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip-del { cursor: pointer; color: var(--text4); flex-shrink: 0; font-size: 13px; }
+.file-chip-del:hover { color: var(--red); }
+
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--border); }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: white; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; opacity: 0; transition: all 0.25s; z-index: 999; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.green { background: var(--accent); }
+.toast.red { background: var(--red); }
+
+/* LOADING OVERLAY */
+.loading-overlay { position: fixed; inset: 0; background: rgba(247,246,243,0.85); backdrop-filter: blur(4px); z-index: 900; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+.loading-overlay.hidden { display: none; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text2); font-weight: 500; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+.cell-secondary { font-size: 11px; color: var(--text3); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Učitavam...</div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">📁</div>
+    <div class="login-title">WorkVault</div>
+    <div class="login-sub">Upravljanje radovima i evidencijom</div>
+    <button class="btn-google" onclick="signIn()">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Prijavi se sa Google nalogom
+    </button>
+    <hr class="login-divider">
+    <div class="login-info">
+      Vaši podaci se čuvaju na <strong>vašem Google Drive-u</strong>.<br>
+      Aplikacija nema pristup ničemu osim WorkVault fajlova.
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">📁</div>
+      <div class="logo-name">WorkVault</div>
+      <div class="logo-sub">Upravljanje radovima</div>
+    </div>
+
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-name" id="user-name">Korisnik</div>
+      <button class="btn-signout" onclick="signOut()">Izlaz</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Sekcije</div>
+      <div class="nav-item active" onclick="showPage('payments')" id="nav-payments">
+        <span class="nav-icon">💳</span> Plaćanja
+        <span class="nav-badge" id="badge-payments">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('jobs')" id="nav-jobs">
+        <span class="nav-icon">🔧</span> Poslovi
+        <span class="nav-badge" id="badge-jobs">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence">
+        <span class="nav-icon">📋</span> Evidencija
+        <span class="nav-badge" id="badge-evidence">0</span>
+      </div>
+    </div>
+
+    <div class="drive-status">
+      <div class="drive-dot" id="drive-dot"></div>
+      <span id="drive-status-text">Nije sinhronizovano</span>
+    </div>
+
+    <div class="sync-btns">
+      <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="saveToDrive()">↑ Sačuvaj na Drive</button>
+      <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="loadFromDrive()">↓ Učitaj sa Drive</button>
+    </div>
+
+    <div class="sidebar-footer">WorkVault · Google Drive</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAYMENTS -->
+    <div class="page active" id="page-payments">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Finansije</div>
+          <div class="page-title">Plaćanja</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="exportCSV('payments')">↓ CSV</button>
+          <button class="btn btn-primary" onclick="openModal('modal-payment')">＋ Dodaj plaćanje</button>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Ukupni prihodi</div><div class="stat-value green" id="stat-income">€0</div></div>
+        <div class="stat-card"><div class="stat-label">Ukupni rashodi</div><div class="stat-value amber" id="stat-expenses">€0</div></div>
+        <div class="stat-card"><div class="stat-label">Neto saldo</div><div class="stat-value" id="stat-balance">€0</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar"><span class="table-toolbar-title">Sve transakcije</span></div>
+        <div class="tbl-outer">
+          <table>
+            <thead><tr><th>Datum</th><th>Opis</th><th>Kategorija</th><th>Metoda</th><th>Tip</th><th>Iznos</th><th></th></tr></thead>
+            <tbody id="payments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="page" id="page-jobs">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Upravljanje</div>
+          <div class="page-title">Poslovi</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="exportCSV('jobs')">↓ CSV</button>
+          <button class="btn btn-primary" onclick="openModal('modal-job')">＋ Dodaj posao</button>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Ukupno poslova</div><div class="stat-value" id="stat-jobs-total">0</div></div>
+        <div class="stat-card"><div class="stat-label">Aktivni</div><div class="stat-value green" id="stat-jobs-active">0</div></div>
+        <div class="stat-card"><div class="stat-label">Završeni</div><div class="stat-value amber" id="stat-jobs-done">0</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar"><span class="table-toolbar-title">Svi poslovi</span></div>
+        <div class="tbl-outer">
+          <table>
+            <thead><tr><th>Datum</th><th>Naziv posla</th><th>Klijent</th><th>Prioritet</th><th>Status</th><th>Vrijednost</th><th></th></tr></thead>
+            <tbody id="jobs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVIDENCE -->
+    <div class="page" id="page-evidence">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Dokumentacija</div>
+          <div class="page-title">Evidencija</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="exportCSV('evidence')">↓ CSV</button>
+          <button class="btn btn-primary" onclick="openModal('modal-evidence')">＋ Dodaj zapis</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar"><span class="table-toolbar-title">Svi zapisi evidencije</span></div>
+        <div class="tbl-outer">
+          <table>
+            <thead>
+              <tr>
+                <th>Ime</th><th>Prezime</th><th>JMBG</th><th>Telefon</th>
+                <th>Opština</th><th>KO</th><th>Parcela</th>
+                <th>Fotografije</th><th>DWG</th><th>Elaborat</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="evidence-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: PAYMENT -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Novo plaćanje</div>
+      <button class="modal-close" onclick="closeModal('modal-payment')">✕</button>
+    </div>
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label>Datum</label><input type="date" id="p-date"></div>
+      <div class="form-group"><label>Tip</label><select id="p-type"><option value="income">Prihod</option><option value="expense">Rashod</option></select></div>
+      <div class="form-group full"><label>Opis</label><input type="text" id="p-desc" placeholder="Za šta je ovo plaćanje?"></div>
+      <div class="form-group"><label>Kategorija</label><select id="p-category"><option>Usluge</option><option>Materijali</option><option>Oprema</option><option>Plata</option><option>Porez</option><option>Ostalo</option></select></div>
+      <div class="form-group"><label>Metoda</label><select id="p-method"><option>Bankovni transfer</option><option>Gotovina</option><option>Kartica</option><option>Ček</option><option>Ostalo</option></select></div>
+      <div class="form-group full"><label>Iznos (€)</label><input type="number" id="p-amount" placeholder="0.00" step="0.01" min="0"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-payment')">Otkaži</button>
+      <button class="btn btn-primary" onclick="savePayment()">Sačuvaj plaćanje</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: JOB -->
+<div class="modal-overlay" id="modal-job">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Novi posao</div>
+      <button class="modal-close" onclick="closeModal('modal-job')">✕</button>
+    </div>
+    <div class="form-grid form-grid-2">
+      <div class="form-group"><label>Datum</label><input type="date" id="j-date"></div>
+      <div class="form-group"><label>Prioritet</label><select id="j-priority"><option value="low">Nizak</option><option value="medium" selected>Srednji</option><option value="high">Visok</option><option value="urgent">Hitan</option></select></div>
+      <div class="form-group full"><label>Naziv posla</label><input type="text" id="j-name" placeholder="Naziv ili opis posla"></div>
+      <div class="form-group"><label>Klijent</label><input type="text" id="j-client" placeholder="Ime klijenta"></div>
+      <div class="form-group"><label>Vrijednost (€)</label><input type="number" id="j-value" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group full"><label>Status</label><select id="j-status"><option value="pending">Na čekanju</option><option value="active">Aktivan</option><option value="completed">Završen</option><option value="cancelled">Otkazan</option></select></div>
+      <div class="form-group full"><label>Napomene</label><textarea id="j-notes" placeholder="Dodatne napomene..."></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-job')">Otkaži</button>
+      <button class="btn btn-primary" onclick="saveJob()">Sačuvaj posao</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EVIDENCE -->
+<div class="modal-overlay" id="modal-evidence">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">Novi zapis evidencije</div>
+      <button class="modal-close" onclick="closeModal('modal-evidence')">✕</button>
+    </div>
+    <div class="form-grid form-grid-3">
+      <div class="form-group"><label>Ime</label><input type="text" id="e-ime" placeholder="Ime"></div>
+      <div class="form-group"><label>Prezime</label><input type="text" id="e-prezime" placeholder="Prezime"></div>
+      <div class="form-group"><label>JMBG</label><input type="text" id="e-jmbg" placeholder="1234567890123" maxlength="13"></div>
+      <div class="form-group"><label>Telefon</label><input type="text" id="e-telefon" placeholder="+382 ..."></div>
+      <div class="form-group"><label>Opština</label><input type="text" id="e-opstina" placeholder="Opština"></div>
+      <div class="form-group"><label>KO</label><input type="text" id="e-ko" placeholder="Katastarska opština"></div>
+      <div class="form-group full"><label>Parcela</label><input type="text" id="e-parcela" placeholder="Broj parcele"></div>
+      <hr class="form-divider">
+      <div class="form-group full">
+        <label>📷 Fotografije</label>
+        <div class="file-zone"><input type="file" id="e-fotografije" multiple accept="image/*" onchange="handleFiles(this,'fotografije')"><div class="file-zone-icon">🖼️</div><div class="file-zone-text">Kliknite ili prevucite fotografije ovdje</div></div>
+        <div class="file-preview" id="fp-fotografije"></div>
+      </div>
+      <div class="form-group full">
+        <label>📐 DWG fajlovi</label>
+        <div class="file-zone"><input type="file" id="e-dwg" multiple accept=".dwg,.dxf,.pdf" onchange="handleFiles(this,'dwg')"><div class="file-zone-icon">📐</div><div class="file-zone-text">Kliknite ili prevucite DWG/DXF fajlove ovdje</div></div>
+        <div class="file-preview" id="fp-dwg"></div>
+      </div>
+      <div class="form-group full">
+        <label>📄 Elaborat</label>
+        <div class="file-zone"><input type="file" id="e-elaborat" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" onchange="handleFiles(this,'elaborat')"><div class="file-zone-icon">📄</div><div class="file-zone-text">Kliknite ili prevucite elaborat fajlove ovdje</div></div>
+        <div class="file-preview" id="fp-elaborat"></div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-evidence')">Otkaži</button>
+      <button class="btn btn-primary" onclick="saveEvidence()">Sačuvaj zapis</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =========================================================
+// CONFIG
+// =========================================================
+const CLIENT_ID = '587961780682-jsr5328s7dhqjinr7fe6tn5lctsethsq.apps.googleusercontent.com';
+const API_KEY   = 'AIzaSyBrFazREb2M2RoT57-wDShe80F1q8GjsZM';
+const SCOPES    = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILE_NAME = 'workvault-data.json';
+
+// =========================================================
+// STATE
+// =========================================================
+let accessToken = null;
+let driveFileId = null;
+let DB = { payments: [], jobs: [], evidence: [] };
+let tempFiles = { fotografije: [], dwg: [], elaborat: [] };
+
+// =========================================================
+// TOAST
+// =========================================================
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// =========================================================
+// LOADING
+// =========================================================
+function showLoading(msg='Učitavam...') {
+  document.getElementById('loading-text').textContent = msg;
+  document.getElementById('loading-overlay').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+// =========================================================
+// DRIVE STATUS
+// =========================================================
+function setDriveStatus(status, msg) {
+  const dot = document.getElementById('drive-dot');
+  const text = document.getElementById('drive-status-text');
+  dot.className = 'drive-dot ' + (status === 'ok' ? 'ok' : status === 'syncing' ? 'syncing' : '');
+  text.textContent = msg;
+}
+
+// =========================================================
+// GOOGLE AUTH
+// =========================================================
+function initGoogleAuth() {
+  gapi.load('client', async () => {
+    await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    hideLoading();
+
+    // Check if we have a stored token
+    const stored = sessionStorage.getItem('wv_token');
+    if (stored) {
+      accessToken = stored;
+      gapi.client.setToken({ access_token: accessToken });
+      await onSignedIn();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  });
+}
+
+function signIn() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: async (response) => {
+      if (response.error) { toast('Greška pri prijavi: ' + response.error, 'red'); return; }
+      accessToken = response.access_token;
+      sessionStorage.setItem('wv_token', accessToken);
+      gapi.client.setToken({ access_token: accessToken });
+      await onSignedIn();
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function onSignedIn() {
+  showLoading('Učitavam podatke...');
+  document.getElementById('login-screen').style.display = 'none';
+
+  // Get user info
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    const info = await res.json();
+    document.getElementById('user-name').textContent = info.name || info.email || 'Korisnik';
+    const avatar = document.getElementById('user-avatar');
+    if (info.picture) {
+      avatar.innerHTML = `<img src="${info.picture}" alt="">`;
+    } else {
+      avatar.textContent = (info.name || 'K')[0].toUpperCase();
+    }
+  } catch(e) {}
+
+  document.getElementById('app').classList.add('visible');
+  await loadFromDrive();
+  hideLoading();
+}
+
+function signOut() {
+  if (!confirm('Odjaviti se?')) return;
+  accessToken = null;
+  sessionStorage.removeItem('wv_token');
+  google.accounts.oauth2.revoke(accessToken, () => {});
+  DB = { payments: [], jobs: [], evidence: [] };
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  setDriveStatus('', 'Nije sinhronizovano');
+}
+
+// =========================================================
+// GOOGLE DRIVE API
+// =========================================================
+async function driveRequest(method, endpoint, params={}, body=null) {
+  const url = new URL('https://www.googleapis.com/drive/v3/' + endpoint);
+  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+  const opts = {
+    method,
+    headers: { Authorization: 'Bearer ' + accessToken }
+  };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error('Drive API error: ' + res.status);
+  return res.json();
+}
+
+async function findDriveFile() {
+  const res = await driveRequest('GET', 'files', {
+    q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
+    spaces: 'drive',
+    fields: 'files(id,name)'
+  });
+  return res.files && res.files.length > 0 ? res.files[0].id : null;
+}
+
+async function saveToDrive() {
+  if (!accessToken) { toast('Niste prijavljeni.', 'red'); return; }
+  setDriveStatus('syncing', 'Čuvam na Drive...');
+  try {
+    const content = JSON.stringify(DB, null, 2);
+    const blob = new Blob([content], { type: 'application/json' });
+
+    if (!driveFileId) driveFileId = await findDriveFile();
+
+    if (driveFileId) {
+      // Update existing file
+      const formData = new FormData();
+      formData.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME })], { type: 'application/json' }));
+      formData.append('file', blob);
+      const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + accessToken },
+        body: formData
+      });
+      if (!res.ok) throw new Error('Update failed');
+    } else {
+      // Create new file
+      const formData = new FormData();
+      formData.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })], { type: 'application/json' }));
+      formData.append('file', blob);
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + accessToken },
+        body: formData
+      });
+      if (!res.ok) throw new Error('Create failed');
+      const data = await res.json();
+      driveFileId = data.id;
+    }
+
+    setDriveStatus('ok', 'Sačuvano · ' + new Date().toLocaleTimeString('sr'));
+    toast('✓ Podaci sačuvani na Google Drive!', 'green');
+  } catch(err) {
+    setDriveStatus('', 'Greška pri čuvanju');
+    toast('Greška: ' + err.message, 'red');
+  }
+}
+
+async function loadFromDrive() {
+  if (!accessToken) return;
+  setDriveStatus('syncing', 'Učitavam sa Drive...');
+  try {
+    if (!driveFileId) driveFileId = await findDriveFile();
+    if (!driveFileId) {
+      setDriveStatus('', 'Novi fajl · još nije sačuvan');
+      render();
+      return;
+    }
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    if (!res.ok) throw new Error('Download failed');
+    const data = await res.json();
+    if (data.payments) DB.payments = data.payments;
+    if (data.jobs) DB.jobs = data.jobs;
+    if (data.evidence) DB.evidence = data.evidence;
+    setDriveStatus('ok', 'Učitano · ' + new Date().toLocaleTimeString('sr'));
+    render();
+    toast('✓ Podaci učitani sa Google Drive!', 'green');
+  } catch(err) {
+    setDriveStatus('', 'Greška pri učitavanju');
+    toast('Greška: ' + err.message, 'red');
+    render();
+  }
+}
+
+// =========================================================
+// NAV
+// =========================================================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+// =========================================================
+// MODALS
+// =========================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  const dateMap = { 'modal-payment': 'p-date', 'modal-job': 'j-date' };
+  if (dateMap[id]) document.getElementById(dateMap[id]).value = today();
+  if (id === 'modal-evidence') resetEvidenceForm();
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.querySelectorAll('#' + id + ' input[type=text], #' + id + ' input[type=number], #' + id + ' textarea').forEach(el => el.value = '');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
+});
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// =========================================================
+// FILES
+// =========================================================
+function resetEvidenceForm() {
+  tempFiles = { fotografije: [], dwg: [], elaborat: [] };
+  ['fotografije','dwg','elaborat'].forEach(k => {
+    document.getElementById('fp-' + k).innerHTML = '';
+    document.getElementById('e-' + k).value = '';
+  });
+  ['e-ime','e-prezime','e-jmbg','e-telefon','e-opstina','e-ko','e-parcela'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function handleFiles(input, field) {
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      tempFiles[field].push({ name: file.name, type: file.type, data: e.target.result });
+      renderFilePreview(field);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderFilePreview(field) {
+  document.getElementById('fp-' + field).innerHTML = tempFiles[field].map((f,i) => `
+    <div class="file-chip">
+      <span>${fileIcon(f.type)} ${f.name}</span>
+      <span class="file-chip-del" onclick="removeFile('${field}',${i})">×</span>
+    </div>
+  `).join('');
+}
+
+function removeFile(field, idx) {
+  tempFiles[field].splice(idx, 1);
+  renderFilePreview(field);
+}
+
+function fileIcon(type) {
+  if (!type) return '📎';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type === 'application/pdf') return '📄';
+  if (type.includes('word')) return '📝';
+  if (type.includes('sheet') || type.includes('excel')) return '📊';
+  return '📎';
+}
+
+// =========================================================
+// PAYMENTS
+// =========================================================
+function savePayment() {
+  const date = document.getElementById('p-date').value;
+  const desc = document.getElementById('p-desc').value.trim();
+  const amount = parseFloat(document.getElementById('p-amount').value);
+  if (!date || !desc || isNaN(amount) || amount <= 0) { toast('Popunite sva obavezna polja.', 'red'); return; }
+  DB.payments.push({
+    id: Date.now(), date, desc,
+    category: document.getElementById('p-category').value,
+    method: document.getElementById('p-method').value,
+    type: document.getElementById('p-type').value,
+    amount
+  });
+  closeModal('modal-payment');
+  render();
+  autoSave();
+  toast('Plaćanje dodano.', 'green');
+}
+
+function renderPayments() {
+  const payments = [...DB.payments].sort((a,b) => b.date.localeCompare(a.date));
+  const tbody = document.getElementById('payments-tbody');
+  tbody.innerHTML = payments.length ? payments.map(p => `
+    <tr>
+      <td>${p.date}</td>
+      <td>${p.desc}</td>
+      <td><span class="badge badge-gray">${p.category}</span></td>
+      <td>${p.method}</td>
+      <td><span class="badge ${p.type==='income'?'badge-green':'badge-red'}">${p.type==='income'?'Prihod':'Rashod'}</span></td>
+      <td><span class="amount ${p.type==='income'?'pos':'neg'}">${p.type==='income'?'+':'-'}${fmt(p.amount)}</span></td>
+      <td><button class="btn-del" onclick="del('payments',${p.id})">Obriši</button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">💳</div><div class="empty-text">Nema plaćanja.</div></div></td></tr>`;
+
+  const income   = DB.payments.filter(p=>p.type==='income').reduce((s,p)=>s+p.amount,0);
+  const expenses = DB.payments.filter(p=>p.type==='expense').reduce((s,p)=>s+p.amount,0);
+  const bal = income - expenses;
+  document.getElementById('stat-income').textContent   = fmt(income);
+  document.getElementById('stat-expenses').textContent = fmt(expenses);
+  const el = document.getElementById('stat-balance');
+  el.textContent  = (bal<0?'-':'') + fmt(Math.abs(bal));
+  el.style.color  = bal < 0 ? 'var(--red)' : 'var(--accent)';
+}
+
+// =========================================================
+// JOBS
+// =========================================================
+function saveJob() {
+  const date = document.getElementById('j-date').value;
+  const name = document.getElementById('j-name').value.trim();
+  if (!date || !name) { toast('Unesite datum i naziv posla.', 'red'); return; }
+  DB.jobs.push({
+    id: Date.now(), date, name,
+    client: document.getElementById('j-client').value.trim(),
+    priority: document.getElementById('j-priority').value,
+    status: document.getElementById('j-status').value,
+    value: parseFloat(document.getElementById('j-value').value) || 0,
+    notes: document.getElementById('j-notes').value.trim()
+  });
+  closeModal('modal-job');
+  render();
+  autoSave();
+  toast('Posao dodan.', 'green');
+}
+
+const priorityLabel = { low:'Nizak', medium:'Srednji', high:'Visok', urgent:'Hitan' };
+const priorityBadge = { low:'badge-gray', medium:'badge-blue', high:'badge-amber', urgent:'badge-red' };
+const statusLabel   = { pending:'Na čekanju', active:'Aktivan', completed:'Završen', cancelled:'Otkazan' };
+const statusBadge   = { pending:'badge-amber', active:'badge-green', completed:'badge-blue', cancelled:'badge-red' };
+
+function renderJobs() {
+  const jobs = [...DB.jobs].sort((a,b) => b.date.localeCompare(a.date));
+  const tbody = document.getElementById('jobs-tbody');
+  tbody.innerHTML = jobs.length ? jobs.map(j => `
+    <tr>
+      <td>${j.date}</td>
+      <td><strong>${j.name}</strong>${j.notes?`<div class="cell-secondary">${j.notes.substring(0,60)}${j.notes.length>60?'…':''}</div>`:''}</td>
+      <td>${j.client||'—'}</td>
+      <td><span class="badge ${priorityBadge[j.priority]||'badge-gray'}">${priorityLabel[j.priority]||j.priority}</span></td>
+      <td><span class="badge ${statusBadge[j.status]||'badge-gray'}">${statusLabel[j.status]||j.status}</span></td>
+      <td>${j.value?`<span class="amount">${fmt(j.value)}</span>`:'—'}</td>
+      <td><button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Nema poslova.</div></div></td></tr>`;
+
+  document.getElementById('stat-jobs-total').textContent  = DB.jobs.length;
+  document.getElementById('stat-jobs-active').textContent = DB.jobs.filter(j=>j.status==='active').length;
+  document.getElementById('stat-jobs-done').textContent   = DB.jobs.filter(j=>j.status==='completed').length;
+}
+
+// =========================================================
+// EVIDENCE
+// =========================================================
+function saveEvidence() {
+  const ime     = document.getElementById('e-ime').value.trim();
+  const prezime = document.getElementById('e-prezime').value.trim();
+  if (!ime || !prezime) { toast('Ime i prezime su obavezni.', 'red'); return; }
+  DB.evidence.push({
+    id: Date.now(), ime, prezime,
+    jmbg:     document.getElementById('e-jmbg').value.trim(),
+    telefon:  document.getElementById('e-telefon').value.trim(),
+    opstina:  document.getElementById('e-opstina').value.trim(),
+    ko:       document.getElementById('e-ko').value.trim(),
+    parcela:  document.getElementById('e-parcela').value.trim(),
+    fotografije: [...tempFiles.fotografije],
+    dwg:         [...tempFiles.dwg],
+    elaborat:    [...tempFiles.elaborat]
+  });
+  closeModal('modal-evidence');
+  render();
+  autoSave();
+  toast('Zapis dodan.', 'green');
+}
+
+function renderEvidence() {
+  const tbody = document.getElementById('evidence-tbody');
+  tbody.innerHTML = DB.evidence.length ? DB.evidence.map(e => `
+    <tr>
+      <td>${e.ime}</td>
+      <td>${e.prezime}</td>
+      <td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td>
+      <td>${e.telefon||'—'}</td>
+      <td>${e.opstina||'—'}</td>
+      <td>${e.ko||'—'}</td>
+      <td>${e.parcela||'—'}</td>
+      <td>${renderAttachments(e.id,'fotografije',e.fotografije)}</td>
+      <td>${renderAttachments(e.id,'dwg',e.dwg)}</td>
+      <td>${renderAttachments(e.id,'elaborat',e.elaborat)}</td>
+      <td><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></td>
+    </tr>
+  `).join('') : `<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
+}
+
+function renderAttachments(recordId, field, files) {
+  if (!files || !files.length) return '<span style="color:var(--text4);font-size:12px">—</span>';
+  return `<div class="att-chips">${files.map((f,i) =>
+    `<span class="att-chip" onclick="openAttachment(${recordId},'${field}',${i})" title="${f.name}">
+      ${fileIcon(f.type)} ${f.name.length>14?f.name.substring(0,12)+'…':f.name}
+    </span>`
+  ).join('')}</div>`;
+}
+
+function openAttachment(recordId, field, idx) {
+  const rec = DB.evidence.find(e => e.id === recordId);
+  if (!rec) return;
+  const f = rec[field][idx];
+  if (!f || !f.data) { toast('Fajl nije dostupan.', 'red'); return; }
+  if (f.type.startsWith('image/')) {
+    const w = window.open();
+    w.document.write(`<title>${f.name}</title><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${f.data}" style="max-width:100%;max-height:100vh;object-fit:contain"></body>`);
+  } else {
+    const a = document.createElement('a');
+    a.href = f.data; a.download = f.name; a.click();
+  }
+}
+
+// =========================================================
+// DELETE
+// =========================================================
+function del(type, id) {
+  if (!confirm('Obrisati ovaj zapis?')) return;
+  DB[type] = DB[type].filter(item => item.id !== id);
+  render();
+  autoSave();
+  toast('Zapis obrisan.');
+}
+
+// =========================================================
+// AUTO SAVE (debounced)
+// =========================================================
+let saveTimer = null;
+function autoSave() {
+  clearTimeout(saveTimer);
+  setDriveStatus('syncing', 'Čekam...');
+  saveTimer = setTimeout(() => saveToDrive(), 2000);
+}
+
+// =========================================================
+// EXPORT CSV
+// =========================================================
+function exportCSV(type) {
+  if (!DB[type].length) { toast('Nema podataka za export.', 'red'); return; }
+  let csv = '';
+  if (type === 'payments') {
+    csv = 'Datum,Opis,Kategorija,Metoda,Tip,Iznos\n' +
+      DB.payments.map(p => `${p.date},"${p.desc}",${p.category},${p.method},${p.type},${p.amount}`).join('\n');
+  } else if (type === 'jobs') {
+    csv = 'Datum,Naziv,Klijent,Prioritet,Status,Vrijednost,Napomene\n' +
+      DB.jobs.map(j => `${j.date},"${j.name}","${j.client||''}",${j.priority},${j.status},${j.value},"${j.notes||''}"`).join('\n');
+  } else {
+    csv = 'Ime,Prezime,JMBG,Telefon,Opstina,KO,Parcela,Fotografije,DWG,Elaborat\n' +
+      DB.evidence.map(e => `${e.ime},${e.prezime},${e.jmbg||''},${e.telefon||''},${e.opstina||''},${e.ko||''},${e.parcela||''},${(e.fotografije||[]).length} fajl(a),${(e.dwg||[]).length} fajl(a),${(e.elaborat||[]).length} fajl(a)`).join('\n');
+  }
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `workvault_${type}_${today()}.csv`;
+  a.click();
+}
+
+// =========================================================
+// RENDER & UTILS
+// =========================================================
+function render() {
+  renderPayments();
+  renderJobs();
+  renderEvidence();
+  document.getElementById('badge-payments').textContent = DB.payments.length;
+  document.getElementById('badge-jobs').textContent     = DB.jobs.length;
+  document.getElementById('badge-evidence').textContent = DB.evidence.length;
+}
+
+function fmt(n) { return '€' + (n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+// =========================================================
+// INIT
+// =========================================================
+window.addEventListener('load', () => {
+  showLoading('Inicijalizujem...');
+  gapi.load('client', async () => {
+    await gapi.client.init({
+      apiKey: API_KEY,
+      discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+    });
+    const stored = sessionStorage.getItem('wv_token');
+    if (stored) {
+      accessToken = stored;
+      gapi.client.setToken({ access_token: accessToken });
+      await onSignedIn();
+    } else {
+      hideLoading();
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  });
+});
+</script>
+</body>
+</html>
