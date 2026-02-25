@@ -258,9 +258,6 @@ tbody tr:hover td { background: #fafaf8; }
 .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
 .btn-del { background: transparent; color: var(--text4); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; border-radius: 5px; cursor: pointer; font-family: var(--sans); font-weight: 500; transition: all 0.15s; }
 .btn-del:hover { color: var(--red); border-color: var(--red); background: var(--red-light); }
-.btn-edit { background: transparent; color: var(--text3); border: 1px solid var(--border); padding: 4px 10px; font-size: 11px; border-radius: 5px; cursor: pointer; font-family: var(--sans); font-weight: 500; transition: all 0.15s; margin-right: 4px; }
-.btn-edit:hover { color: var(--blue); border-color: var(--blue); background: var(--blue-light); }
-.td-actions { display: flex; gap: 4px; align-items: center; white-space: nowrap; }
 
 /* AMOUNT */
 .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -604,7 +601,6 @@ let accessToken = null;
 let driveFileId = null;
 let DB = { payments: [], jobs: [], evidence: [] };
 let tempFiles = { fotografije: [], dwg: [], elaborat: [] };
-let editingId = { payments: null, jobs: null, evidence: null };
 
 // =========================================================
 // TOAST
@@ -819,25 +815,11 @@ function showPage(name) {
 // =========================================================
 // MODALS
 // =========================================================
-function openModal(id, eid=null) {
+function openModal(id) {
   document.getElementById(id).classList.add('open');
   const dateMap = { 'modal-payment': 'p-date', 'modal-job': 'j-date' };
-  const typeMap = { 'modal-payment': 'payments', 'modal-job': 'jobs', 'modal-evidence': 'evidence' };
-  const type = typeMap[id];
-  if (type) editingId[type] = eid;
-
-  // Update modal title
-  const titles = {
-    'modal-payment':  eid ? 'Izmijeni plaćanje' : 'Novo plaćanje',
-    'modal-job':      eid ? 'Izmijeni posao'    : 'Novi posao',
-    'modal-evidence': eid ? 'Izmijeni zapis'    : 'Novi zapis evidencije'
-  };
-  document.querySelector('#' + id + ' .modal-title').textContent = titles[id] || '';
-
-  if (!eid) {
-    if (dateMap[id]) document.getElementById(dateMap[id]).value = today();
-    if (id === 'modal-evidence') resetEvidenceForm();
-  }
+  if (dateMap[id]) document.getElementById(dateMap[id]).value = today();
+  if (id === 'modal-evidence') resetEvidenceForm();
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
@@ -898,54 +880,6 @@ function fileIcon(type) {
 }
 
 // =========================================================
-// EDIT HELPERS
-// =========================================================
-function editPayment(id) {
-  const p = DB.payments.find(x => x.id === id);
-  if (!p) return;
-  openModal('modal-payment', id);
-  document.getElementById('p-date').value     = p.date;
-  document.getElementById('p-type').value     = p.type;
-  document.getElementById('p-desc').value     = p.desc;
-  document.getElementById('p-category').value = p.category;
-  document.getElementById('p-method').value   = p.method;
-  document.getElementById('p-amount').value   = p.amount;
-}
-
-function editJob(id) {
-  const j = DB.jobs.find(x => x.id === id);
-  if (!j) return;
-  openModal('modal-job', id);
-  document.getElementById('j-date').value     = j.date;
-  document.getElementById('j-name').value     = j.name;
-  document.getElementById('j-client').value   = j.client || '';
-  document.getElementById('j-priority').value = j.priority;
-  document.getElementById('j-status').value   = j.status;
-  document.getElementById('j-value').value    = j.value || '';
-  document.getElementById('j-notes').value    = j.notes || '';
-}
-
-function editEvidence(id) {
-  const e = DB.evidence.find(x => x.id === id);
-  if (!e) return;
-  openModal('modal-evidence', id);
-  document.getElementById('e-ime').value     = e.ime || '';
-  document.getElementById('e-prezime').value = e.prezime || '';
-  document.getElementById('e-jmbg').value    = e.jmbg || '';
-  document.getElementById('e-telefon').value = e.telefon || '';
-  document.getElementById('e-opstina').value = e.opstina || '';
-  document.getElementById('e-ko').value      = e.ko || '';
-  document.getElementById('e-parcela').value = e.parcela || '';
-  // Load existing files into tempFiles so they're preserved
-  tempFiles.fotografije = [...(e.fotografije || [])];
-  tempFiles.dwg         = [...(e.dwg || [])];
-  tempFiles.elaborat    = [...(e.elaborat || [])];
-  renderFilePreview('fotografije');
-  renderFilePreview('dwg');
-  renderFilePreview('elaborat');
-}
-
-// =========================================================
 // PAYMENTS
 // =========================================================
 function savePayment() {
@@ -953,26 +887,17 @@ function savePayment() {
   const desc = document.getElementById('p-desc').value.trim();
   const amount = parseFloat(document.getElementById('p-amount').value);
   if (!date || !desc || isNaN(amount) || amount <= 0) { toast('Popunite sva obavezna polja.', 'red'); return; }
-
-  const data = {
-    date, desc,
+  DB.payments.push({
+    id: Date.now(), date, desc,
     category: document.getElementById('p-category').value,
-    method:   document.getElementById('p-method').value,
-    type:     document.getElementById('p-type').value,
+    method: document.getElementById('p-method').value,
+    type: document.getElementById('p-type').value,
     amount
-  };
-
-  if (editingId.payments) {
-    const idx = DB.payments.findIndex(x => x.id === editingId.payments);
-    if (idx !== -1) DB.payments[idx] = { ...DB.payments[idx], ...data };
-    toast('Plaćanje izmijenjeno.', 'green');
-  } else {
-    DB.payments.push({ id: Date.now(), ...data });
-    toast('Plaćanje dodano.', 'green');
-  }
+  });
   closeModal('modal-payment');
   render();
   autoSave();
+  toast('Plaćanje dodano.', 'green');
 }
 
 function renderPayments() {
@@ -986,7 +911,7 @@ function renderPayments() {
       <td>${p.method}</td>
       <td><span class="badge ${p.type==='income'?'badge-green':'badge-red'}">${p.type==='income'?'Prihod':'Rashod'}</span></td>
       <td><span class="amount ${p.type==='income'?'pos':'neg'}">${p.type==='income'?'+':'-'}${fmt(p.amount)}</span></td>
-      <td><div class="td-actions"><button class="btn-edit" onclick="editPayment(${p.id})">Izmijeni</button><button class="btn-del" onclick="del('payments',${p.id})">Obriši</button></div></td>
+      <td><button class="btn-del" onclick="del('payments',${p.id})">Obriši</button></td>
     </tr>
   `).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">💳</div><div class="empty-text">Nema plaćanja.</div></div></td></tr>`;
 
@@ -1007,27 +932,18 @@ function saveJob() {
   const date = document.getElementById('j-date').value;
   const name = document.getElementById('j-name').value.trim();
   if (!date || !name) { toast('Unesite datum i naziv posla.', 'red'); return; }
-
-  const data = {
-    date, name,
-    client:   document.getElementById('j-client').value.trim(),
+  DB.jobs.push({
+    id: Date.now(), date, name,
+    client: document.getElementById('j-client').value.trim(),
     priority: document.getElementById('j-priority').value,
-    status:   document.getElementById('j-status').value,
-    value:    parseFloat(document.getElementById('j-value').value) || 0,
-    notes:    document.getElementById('j-notes').value.trim()
-  };
-
-  if (editingId.jobs) {
-    const idx = DB.jobs.findIndex(x => x.id === editingId.jobs);
-    if (idx !== -1) DB.jobs[idx] = { ...DB.jobs[idx], ...data };
-    toast('Posao izmijenjen.', 'green');
-  } else {
-    DB.jobs.push({ id: Date.now(), ...data });
-    toast('Posao dodan.', 'green');
-  }
+    status: document.getElementById('j-status').value,
+    value: parseFloat(document.getElementById('j-value').value) || 0,
+    notes: document.getElementById('j-notes').value.trim()
+  });
   closeModal('modal-job');
   render();
   autoSave();
+  toast('Posao dodan.', 'green');
 }
 
 const priorityLabel = { low:'Nizak', medium:'Srednji', high:'Visok', urgent:'Hitan' };
@@ -1046,7 +962,7 @@ function renderJobs() {
       <td><span class="badge ${priorityBadge[j.priority]||'badge-gray'}">${priorityLabel[j.priority]||j.priority}</span></td>
       <td><span class="badge ${statusBadge[j.status]||'badge-gray'}">${statusLabel[j.status]||j.status}</span></td>
       <td>${j.value?`<span class="amount">${fmt(j.value)}</span>`:'—'}</td>
-      <td><div class="td-actions"><button class="btn-edit" onclick="editJob(${j.id})">Izmijeni</button><button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button></div></td>
+      <td><button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button></td>
     </tr>
   `).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Nema poslova.</div></div></td></tr>`;
 
@@ -1062,30 +978,21 @@ function saveEvidence() {
   const ime     = document.getElementById('e-ime').value.trim();
   const prezime = document.getElementById('e-prezime').value.trim();
   if (!ime || !prezime) { toast('Ime i prezime su obavezni.', 'red'); return; }
-
-  const data = {
-    ime, prezime,
-    jmbg:        document.getElementById('e-jmbg').value.trim(),
-    telefon:     document.getElementById('e-telefon').value.trim(),
-    opstina:     document.getElementById('e-opstina').value.trim(),
-    ko:          document.getElementById('e-ko').value.trim(),
-    parcela:     document.getElementById('e-parcela').value.trim(),
+  DB.evidence.push({
+    id: Date.now(), ime, prezime,
+    jmbg:     document.getElementById('e-jmbg').value.trim(),
+    telefon:  document.getElementById('e-telefon').value.trim(),
+    opstina:  document.getElementById('e-opstina').value.trim(),
+    ko:       document.getElementById('e-ko').value.trim(),
+    parcela:  document.getElementById('e-parcela').value.trim(),
     fotografije: [...tempFiles.fotografije],
     dwg:         [...tempFiles.dwg],
     elaborat:    [...tempFiles.elaborat]
-  };
-
-  if (editingId.evidence) {
-    const idx = DB.evidence.findIndex(x => x.id === editingId.evidence);
-    if (idx !== -1) DB.evidence[idx] = { ...DB.evidence[idx], ...data };
-    toast('Zapis izmijenjen.', 'green');
-  } else {
-    DB.evidence.push({ id: Date.now(), ...data });
-    toast('Zapis dodan.', 'green');
-  }
+  });
   closeModal('modal-evidence');
   render();
   autoSave();
+  toast('Zapis dodan.', 'green');
 }
 
 function renderEvidence() {
@@ -1102,7 +1009,7 @@ function renderEvidence() {
       <td>${renderAttachments(e.id,'fotografije',e.fotografije)}</td>
       <td>${renderAttachments(e.id,'dwg',e.dwg)}</td>
       <td>${renderAttachments(e.id,'elaborat',e.elaborat)}</td>
-      <td><div class="td-actions"><button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></div></td>
+      <td><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></td>
     </tr>
   `).join('') : `<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
 }
