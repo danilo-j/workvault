@@ -178,6 +178,32 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 .card-files{display:flex;flex-wrap:wrap;gap:5px}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 .cell-secondary{font-size:11px;color:var(--text3);margin-top:1px}
+/* IMPORT */
+.import-zone{border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--surface2);margin-bottom:16px}
+.import-zone:hover,.import-zone.drag{border-color:var(--accent);background:var(--accent-light)}
+.import-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.import-zone-icon{font-size:32px;margin-bottom:8px}
+.import-zone-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.import-zone-sub{font-size:12px;color:var(--text3)}
+.import-preview{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;max-height:240px;overflow-y:auto}
+.import-preview table{width:100%;border-collapse:collapse;font-size:12px;min-width:400px}
+.import-preview th{background:var(--bg2);padding:7px 10px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);position:sticky;top:0}
+.import-preview td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+.import-preview tr:last-child td{border-bottom:none}
+.import-info{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--accent-light);border:1px solid rgba(45,106,79,.3);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--accent);font-weight:500}
+.import-warn{background:var(--amber-light);border-color:rgba(180,83,9,.3);color:var(--amber)}
+.import-error{background:var(--red-light);border-color:rgba(220,38,38,.3);color:var(--red)}
+.import-template{font-size:11px;color:var(--text3);margin-top:12px;line-height:1.8;background:var(--bg2);padding:10px 14px;border-radius:8px}
+.import-template code{background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-size:11px;font-family:monospace}
+.col-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.col-map-row{display:flex;align-items:center;gap:8px;font-size:12px;background:var(--surface2);padding:7px 10px;border-radius:7px;border:1px solid var(--border)}
+.col-map-label{color:var(--text2);min-width:100px;flex-shrink:0;font-weight:600;font-size:11px}
+.col-map-select{flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--surface);font-family:var(--sans);outline:none}
+.col-map-req{color:var(--red);margin-left:2px}
+.tab-row{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border)}
+.tab-btn{padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;color:var(--text3);font-family:var(--sans);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -232,6 +258,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         <div><div class="page-eyebrow">Finansije</div><div class="page-title">Plaćanja</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline" onclick="exportCSV('payments')">↓ CSV</button>
+          <button class="btn btn-outline" onclick="openImport('payments')">↑ Uvezi CSV</button>
           <button class="btn btn-primary" onclick="openModal('modal-payment')">＋ Dodaj plaćanje</button>
         </div>
       </div>
@@ -267,6 +294,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         <div><div class="page-eyebrow">Upravljanje</div><div class="page-title">Poslovi</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline" onclick="exportCSV('jobs')">↓ CSV</button>
+          <button class="btn btn-outline" onclick="openImport('jobs')">↑ Uvezi CSV</button>
           <button class="btn btn-primary" onclick="openModal('modal-job')">＋ Dodaj posao</button>
         </div>
       </div>
@@ -304,6 +332,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         <div><div class="page-eyebrow">Dokumentacija</div><div class="page-title">Evidencija</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline" onclick="exportCSV('evidence')">↓ CSV</button>
+          <button class="btn btn-outline" onclick="openImport('evidence')">↑ Uvezi CSV</button>
           <button class="btn btn-primary" onclick="openModal('modal-evidence')">＋ Dodaj zapis</button>
         </div>
       </div>
@@ -418,6 +447,53 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL IMPORT -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title" id="import-modal-title">Uvezi CSV</div>
+      <button class="modal-close" onclick="closeModal('modal-import')">&#x2715;</button>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-upload" onclick="switchImportTab('upload')">1. Učitaj fajl</button>
+      <button class="tab-btn" id="tab-map" onclick="switchImportTab('map')">2. Mapiraj kolone</button>
+      <button class="tab-btn" id="tab-preview" onclick="switchImportTab('preview')">3. Pregled</button>
+    </div>
+    <div id="import-step-upload">
+      <div class="import-zone" id="import-dropzone">
+        <input type="file" accept=".csv,.txt" onchange="handleImportFile(this)">
+        <div class="import-zone-icon">&#x1F4C2;</div>
+        <div class="import-zone-title">Kliknite ili prevucite CSV fajl ovdje</div>
+        <div class="import-zone-sub">Podrzani formati: .csv - UTF-8 ili Windows-1250 enkoding</div>
+      </div>
+      <div id="import-type-info" style="display:none">
+        <div class="import-info" id="import-detect-msg"></div>
+      </div>
+      <div class="import-template">
+        <strong>Ocekivane kolone za <span id="hint-type-name"></span>:</strong><br>
+        <span id="hint-columns"></span>
+      </div>
+    </div>
+    <div id="import-step-map" style="display:none">
+      <div class="import-info" id="map-info-msg">Povezite kolone iz vaseg CSV-a sa poljima aplikacije.</div>
+      <div class="col-map-grid" id="col-map-grid"></div>
+    </div>
+    <div id="import-step-preview" style="display:none">
+      <div class="import-info" id="preview-info-msg"></div>
+      <div class="import-preview" id="import-preview-table"></div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:10px">
+        <input type="checkbox" id="import-append" checked style="width:auto">
+        Dodaj uz postojece (ne brisi stare podatke)
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-import')">Otkazi</button>
+      <button class="btn btn-outline" id="btn-import-back" style="display:none" onclick="importBack()">&#x2190; Nazad</button>
+      <button class="btn btn-primary" id="btn-import-next" onclick="importNext()" disabled>Dalje &#x2192;</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const CLIENT_ID='587961780682-jsr5328s7dhqjinr7fe6tn5lctsethsq.apps.googleusercontent.com';
@@ -793,6 +869,158 @@ function exportPDF(){
   const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`WorkVault_Izvjestaj_${yr}.html`;a.click();
   toast('Otvori fajl u browseru i štampaj kao PDF (Ctrl+P).','green');
 }
+
+
+// =========================================================
+// CSV IMPORT
+// =========================================================
+const IMPORT_FIELDS = {
+  payments: [
+    {key:'date',label:'Datum',req:true,hint:'YYYY-MM-DD'},
+    {key:'desc',label:'Opis',req:true,hint:'tekst'},
+    {key:'type',label:'Tip',req:true,hint:'income/expense ili Prihod/Rashod'},
+    {key:'amount',label:'Iznos',req:true,hint:'broj (npr. 150.00)'},
+    {key:'category',label:'Kategorija',req:false,hint:'Usluge, Materijali...'},
+    {key:'method',label:'Metoda',req:false,hint:'Gotovina, Kartica...'}
+  ],
+  jobs: [
+    {key:'date',label:'Datum',req:true,hint:'YYYY-MM-DD'},
+    {key:'name',label:'Naziv',req:true,hint:'naziv posla'},
+    {key:'client',label:'Klijent',req:false,hint:'ime klijenta'},
+    {key:'priority',label:'Prioritet',req:false,hint:'low/medium/high/urgent'},
+    {key:'status',label:'Status',req:false,hint:'pending/active/completed/cancelled'},
+    {key:'value',label:'Vrijednost',req:false,hint:'broj (EUR)'},
+    {key:'notes',label:'Napomene',req:false,hint:'tekst'}
+  ],
+  evidence: [
+    {key:'ime',label:'Ime',req:true,hint:'ime osobe'},
+    {key:'prezime',label:'Prezime',req:true,hint:'prezime osobe'},
+    {key:'jmbg',label:'JMBG',req:false,hint:'13 cifara'},
+    {key:'telefon',label:'Telefon',req:false,hint:'+382...'},
+    {key:'opstina',label:'Opstina',req:false,hint:'naziv opstine'},
+    {key:'ko',label:'KO',req:false,hint:'katastarska opstina'},
+    {key:'parcela',label:'Parcela',req:false,hint:'broj parcele'}
+  ]
+};
+const TYPE_NAMES={payments:'Placanja',jobs:'Poslovi',evidence:'Evidencija'};
+let importState={type:null,rawRows:[],headers:[],step:'upload',parsedRows:[]};
+
+function openImport(type){
+  importState={type,rawRows:[],headers:[],step:'upload',parsedRows:[]};
+  document.getElementById('import-modal-title').textContent='Uvezi CSV - '+TYPE_NAMES[type];
+  document.getElementById('hint-type-name').textContent=TYPE_NAMES[type];
+  const fields=IMPORT_FIELDS[type];
+  document.getElementById('hint-columns').innerHTML=fields.map(f=>`<code>${f.label}</code>${f.req?' <span style="color:var(--red)">*</span>':''} `).join('');
+  document.getElementById('import-type-info').style.display='none';
+  document.getElementById('import-step-upload').style.display='block';
+  document.getElementById('import-step-map').style.display='none';
+  document.getElementById('import-step-preview').style.display='none';
+  ['tab-upload','tab-map','tab-preview'].forEach(id=>{
+    const el=document.getElementById(id);el.classList.remove('active');
+    el.style.opacity=id==='tab-upload'?'1':'0.4';el.style.pointerEvents=id==='tab-upload'?'auto':'none';
+  });
+  document.getElementById('tab-upload').classList.add('active');
+  document.getElementById('btn-import-back').style.display='none';
+  document.getElementById('btn-import-next').disabled=true;
+  document.getElementById('btn-import-next').textContent='Dalje';
+  document.getElementById('modal-import').classList.add('open');
+}
+
+function switchImportTab(tab){
+  if(tab==='map'&&!importState.headers.length)return;
+  if(tab==='preview'&&!importState.parsedRows.length)return;
+  importState.step=tab;
+  ['upload','map','preview'].forEach(t=>{
+    document.getElementById('import-step-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  document.getElementById('btn-import-back').style.display=tab==='upload'?'none':'inline-flex';
+  if(tab==='preview'){document.getElementById('btn-import-next').textContent='Uvezi podatke';document.getElementById('btn-import-next').disabled=false;}
+  else{document.getElementById('btn-import-next').textContent='Dalje';}
+}
+
+function parseCSV(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  return lines.map(line=>{
+    const row=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;}else if((ch===','||ch===';')&&!inQ){row.push(cur.trim());cur='';}else{cur+=ch;}}
+    row.push(cur.trim());return row;
+  });
+}
+
+function handleImportFile(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    if(rows.length<2){toast('CSV fajl je prazan ili neispravan.','red');return;}
+    importState.headers=rows[0];importState.rawRows=rows.slice(1).filter(r=>r.some(c=>c.trim()));
+    document.getElementById('import-type-info').style.display='block';
+    document.getElementById('import-detect-msg').textContent='Ucitano '+importState.rawRows.length+' redova, '+importState.headers.length+' kolona';
+    document.getElementById('import-detect-msg').className='import-info';
+    document.getElementById('btn-import-next').disabled=false;
+    document.getElementById('tab-map').style.opacity='1';document.getElementById('tab-map').style.pointerEvents='auto';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function buildColMap(){
+  const fields=IMPORT_FIELDS[importState.type],headers=importState.headers;
+  document.getElementById('col-map-grid').innerHTML=fields.map(f=>{
+    const best=headers.findIndex(h=>{const hl=h.toLowerCase().trim();return hl===f.label.toLowerCase()||hl===f.key.toLowerCase()||hl.includes(f.key.toLowerCase());});
+    const opts='<option value="">ne uvozi</option>'+headers.map((h,i)=>`<option value="${i}"${i===best?' selected':''}>${h}</option>`).join('');
+    return `<div class="col-map-row"><span class="col-map-label">${f.label}${f.req?'<span class="col-map-req">*</span>':''}</span><select class="col-map-select" id="map-${f.key}">${opts}</select></div>`;
+  }).join('');
+}
+
+function getMapping(){
+  const map={};IMPORT_FIELDS[importState.type].forEach(f=>{const sel=document.getElementById('map-'+f.key);if(sel&&sel.value!=='')map[f.key]=parseInt(sel.value);});return map;
+}
+
+function buildPreview(){
+  const mapping=getMapping(),type=importState.type,fields=IMPORT_FIELDS[type];
+  const missing=fields.filter(f=>f.req&&!(f.key in mapping));
+  if(missing.length){toast('Obavezna polja nisu mapirana: '+missing.map(f=>f.label).join(', '),'red');return false;}
+  const parsed=importState.rawRows.map((row,i)=>{
+    const rec={id:Date.now()+i+Math.random()};
+    for(const [key,idx] of Object.entries(mapping)){
+      let val=(row[idx]||'').trim();
+      if(key==='amount'||key==='value')val=parseFloat(val.replace(',','.'))||0;
+      if(key==='type'){const vl=val.toLowerCase();val=vl==='prihod'||vl==='income'||vl==='p'?'income':'expense';}
+      if(key==='priority'){const vl=val.toLowerCase();val=vl.includes('nizak')||vl==='low'?'low':vl.includes('visok')||vl==='high'?'high':vl.includes('hitan')||vl==='urgent'?'urgent':'medium';}
+      if(key==='status'){const vl=val.toLowerCase();val=vl.includes('aktivan')||vl==='active'?'active':vl.includes('zavrsen')||vl.includes('zavrs')||vl==='completed'?'completed':vl.includes('otkazan')||vl==='cancelled'?'cancelled':'pending';}
+      rec[key]=val;
+    }
+    if(type==='payments'){if(!rec.category)rec.category='Ostalo';if(!rec.method)rec.method='Ostalo';}
+    if(type==='jobs'){if(!rec.priority)rec.priority='medium';if(!rec.status)rec.status='pending';if(rec.value===undefined)rec.value=0;}
+    if(type==='evidence'){if(!rec.fotografije)rec.fotografije=[];if(!rec.dwg)rec.dwg=[];if(!rec.elaborat)rec.elaborat=[];}
+    return rec;
+  });
+  importState.parsedRows=parsed;
+  const cols=Object.keys(mapping),lbl={};IMPORT_FIELDS[type].forEach(f=>lbl[f.key]=f.label);
+  document.getElementById('import-preview-table').innerHTML=`<table><thead><tr>${cols.map(c=>`<th>${lbl[c]||c}</th>`).join('')}</tr></thead><tbody>${parsed.slice(0,5).map(r=>`<tr>${cols.map(c=>`<td>${r[c]!==undefined?r[c]:'--'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  document.getElementById('preview-info-msg').textContent='Pronaseno '+parsed.length+' redova za uvoz. Prikazano prvih '+Math.min(5,parsed.length)+'.';
+  document.getElementById('preview-info-msg').className='import-info';
+  return true;
+}
+
+function importNext(){
+  const step=importState.step;
+  if(step==='upload'){if(!importState.headers.length){toast('Prvo ucitajte CSV fajl.','red');return;}buildColMap();switchImportTab('map');}
+  else if(step==='map'){if(buildPreview())switchImportTab('preview');}
+  else if(step==='preview'){doImport();}
+}
+function importBack(){if(importState.step==='map')switchImportTab('upload');else if(importState.step==='preview')switchImportTab('map');}
+
+function doImport(){
+  const type=importState.type,rows=importState.parsedRows,append=document.getElementById('import-append').checked;
+  if(!append){if(!confirm('Ovo ce OBRISATI sve postojece podatke u sekciji '+TYPE_NAMES[type]+'. Nastaviti?'))return;DB[type]=[];}
+  rows.forEach((r,i)=>r.id=Date.now()+i);
+  DB[type]=[...DB[type],...rows];
+  closeModal('modal-import');render();autoSave();
+  toast('Uvezeno '+rows.length+' zapisa!','green');
+}
+
 
 // CSV
 function exportCSV(type){
