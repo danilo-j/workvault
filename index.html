@@ -263,6 +263,18 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
           <button class="btn btn-primary" onclick="openModal('modal-payment')">＋ Dodaj plaćanje</button>
         </div>
       </div>
+      <!-- RACUN SALDO STRIP -->
+      <div id="racun-strip" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;padding:16px 22px;margin-bottom:16px;color:white;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:4px">Saldo bankovnog računa</div>
+          <div style="font-family:var(--serif);font-size:28px;font-weight:700" id="strip-saldo">€0.00</div>
+        </div>
+        <div style="display:flex;gap:20px;margin-left:auto;flex-wrap:wrap">
+          <div><div style="font-size:10px;opacity:.7;letter-spacing:1px;text-transform:uppercase">Uplaćeno na račun</div><div style="font-size:16px;font-weight:700;margin-top:2px" id="strip-in">€0</div></div>
+          <div><div style="font-size:10px;opacity:.7;letter-spacing:1px;text-transform:uppercase">Isplaćeno s računa</div><div style="font-size:16px;font-weight:700;margin-top:2px" id="strip-out">€0</div></div>
+          <div><div style="font-size:10px;opacity:.7;letter-spacing:1px;text-transform:uppercase">Transakcija</div><div style="font-size:16px;font-weight:700;margin-top:2px" id="strip-count">0</div></div>
+        </div>
+      </div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-label">Ukupni prihodi</div><div class="stat-value green" id="stat-income">€0</div></div>
         <div class="stat-card"><div class="stat-label">Ukupni rashodi</div><div class="stat-value amber" id="stat-expenses">€0</div></div>
@@ -274,6 +286,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
           <input class="search-input" placeholder="🔍 Pretraži..." oninput="renderPayments()" id="search-payments">
           <select class="filter-select" onchange="renderPayments()" id="filter-p-type"><option value="">Svi tipovi</option><option value="income">Prihod</option><option value="expense">Rashod</option></select>
           <select class="filter-select" onchange="renderPayments()" id="filter-p-year"><option value="">Sve godine</option></select>
+          <select class="filter-select" onchange="renderPayments()" id="filter-p-racun"><option value="">Sva plaćanja</option><option value="1">Samo račun</option><option value="0">Van računa</option></select>
         </div>
         <div class="tbl-outer"><table>
           <thead><tr>
@@ -282,6 +295,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
             <th>Kategorija</th><th>Metoda</th>
             <th onclick="setSort('payments','type')">Tip<span class="si">↕</span></th>
             <th onclick="setSort('payments','amount')">Iznos<span class="si">↕</span></th>
+            <th title="Na bankovnom računu">🏦</th>
             <th></th>
           </tr></thead>
           <tbody id="payments-tbody"></tbody>
@@ -334,6 +348,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         <div><div class="page-eyebrow">Finansije</div><div class="page-title">Bankovni račun</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline" onclick="openRacunSetup()">⚙ Postavke</button>
+          <button class="btn btn-outline" onclick="uvezi_iz_placanja()" style="border-color:var(--accent);color:var(--accent)">↓ Uvezi iz Plaćanja</button>
           <button class="btn btn-primary" onclick="openModal('modal-racun-tx')">＋ Dodaj transakciju</button>
         </div>
       </div>
@@ -458,7 +473,11 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div class="form-group full"><label>Opis</label><input type="text" id="p-desc" placeholder="Za šta je ovo plaćanje?"></div>
       <div class="form-group"><label>Kategorija</label><select id="p-category"><option>Usluge</option><option>Materijali</option><option>Oprema</option><option>Plata</option><option>Porez</option><option>Ostalo</option></select></div>
       <div class="form-group"><label>Metoda</label><select id="p-method"><option>Bankovni transfer</option><option>Gotovina</option><option>Kartica</option><option>Ček</option><option>Ostalo</option></select></div>
-      <div class="form-group full"><label>Iznos (€)</label><input type="number" id="p-amount" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group"><label>Iznos (€)</label><input type="number" id="p-amount" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:22px">
+        <input type="checkbox" id="p-naracunu" style="width:auto;margin:0">
+        <label for="p-naracunu" style="cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;letter-spacing:0">🏦 Na bankovnom računu</label>
+      </div>
     </div>
     <div class="form-actions"><button class="btn btn-outline" onclick="closeModal('modal-payment')">Otkaži</button><button class="btn btn-primary" onclick="savePayment()">Sačuvaj</button></div>
   </div>
@@ -777,8 +796,74 @@ function renderFilePreview(field){document.getElementById('fp-'+field).innerHTML
 function removeFile(field,idx){tempFiles[field].splice(idx,1);renderFilePreview(field);}
 
 // EDIT
-function editPayment(id){const p=DB.payments.find(x=>x.id===id);if(!p)return;openModal('modal-payment',id);document.getElementById('p-date').value=p.date;document.getElementById('p-type').value=p.type;document.getElementById('p-desc').value=p.desc;document.getElementById('p-category').value=p.category;document.getElementById('p-method').value=p.method;document.getElementById('p-amount').value=p.amount;}
+function editPayment(id){const p=DB.payments.find(x=>x.id===id);if(!p)return;openModal('modal-payment',id);document.getElementById('p-date').value=p.date;document.getElementById('p-type').value=p.type;document.getElementById('p-desc').value=p.desc;document.getElementById('p-category').value=p.category;document.getElementById('p-method').value=p.method;document.getElementById('p-amount').value=p.amount;document.getElementById('p-naracunu').checked=!!p.naRacunu;}
 function editJob(id){const j=DB.jobs.find(x=>x.id===id);if(!j)return;openModal('modal-job',id);document.getElementById('j-date').value=j.date;document.getElementById('j-name').value=j.name;document.getElementById('j-client').value=j.client||'';document.getElementById('j-priority').value=j.priority;document.getElementById('j-status').value=j.status;document.getElementById('j-value').value=j.value||'';document.getElementById('j-notes').value=j.notes||'';}
+function saveJob(){
+  const date=document.getElementById('j-date').value,name=document.getElementById('j-name').value.trim();
+  if(!date||!name){toast('Unesite datum i naziv posla.','red');return;}
+  const d={date,name,client:document.getElementById('j-client').value.trim(),priority:document.getElementById('j-priority').value,status:document.getElementById('j-status').value,value:parseFloat(document.getElementById('j-value').value)||0,notes:document.getElementById('j-notes').value.trim()};
+  if(editingId.jobs){
+    const prev=DB.jobs.find(x=>x.id===editingId.jobs);
+    const wasCompleted=prev&&prev.status==='completed';
+    const nowCompleted=d.status==='completed';
+    const jidx=DB.jobs.findIndex(x=>x.id===editingId.jobs);
+    if(jidx!==-1)DB.jobs[jidx]={...DB.jobs[jidx],...d};
+    if(!wasCompleted&&nowCompleted&&d.value>0){
+      const already=DB.payments.some(p=>p.jobId===editingId.jobs);
+      if(!already&&confirm('Posao je označen kao Završen. Dodati prihod od '+fmt(d.value)+' u Plaćanja?')){
+        DB.payments.push({id:Date.now(),date:d.date,desc:(d.client?d.client+' — ':'')+d.name,category:'Usluge',method:'Bankovni transfer',type:'income',amount:d.value,jobId:editingId.jobs,naRacunu:false});
+        toast('Posao izmijenjen + prihod dodan u Plaćanja.','green');
+      } else { toast('Posao izmijenjen.','green'); }
+    } else { toast('Posao izmijenjen.','green'); }
+  } else {
+    const newId=Date.now();
+    DB.jobs.push({id:newId,...d});
+    if(d.status==='completed'&&d.value>0){
+      if(confirm('Posao je odmah Završen. Dodati prihod od '+fmt(d.value)+' u Plaćanja?')){
+        DB.payments.push({id:Date.now()+1,date:d.date,desc:(d.client?d.client+' — ':'')+d.name,category:'Usluge',method:'Bankovni transfer',type:'income',amount:d.value,jobId:newId,naRacunu:false});
+        toast('Posao dodan + prihod knjižen u Plaćanja.','green');
+      } else { toast('Posao dodan.','green'); }
+    } else { toast('Posao dodan.','green'); }
+  }
+  closeModal('modal-job');render();autoSave();
+}
+function renderJobs(){
+  const s=(document.getElementById('search-jobs')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-j-status')?.value||'';
+  const yf=document.getElementById('filter-j-year')?.value||'';
+  let d=sortData(DB.jobs,sortState.jobs.col,sortState.jobs.dir);
+  if(s)d=d.filter(j=>j.name.toLowerCase().includes(s)||(j.client||'').toLowerCase().includes(s));
+  if(sf)d=d.filter(j=>j.status===sf);
+  if(yf)d=d.filter(j=>(j.date||'').startsWith(yf));
+  updateSortIcons('jobs');
+  const ysel=document.getElementById('filter-j-year'),cy=ysel?.value;
+  if(ysel){const yrs=getYears(DB.jobs);ysel.innerHTML='<option value="">Sve godine</option>'+yrs.map(y=>`<option value="${y}"${y===cy?' selected':''}>${y}</option>`).join('');}
+  const tbody=document.getElementById('jobs-tbody');
+  const pLabel={low:'Nizak',medium:'Srednji',high:'Visok',urgent:'Hitan'};
+  const pBadge={low:'badge-gray',medium:'badge-blue',high:'badge-amber',urgent:'badge-red'};
+  const stLabel={pending:'Na čekanju',active:'Aktivan',completed:'Završen',cancelled:'Otkazan'};
+  const stBadge={pending:'badge-amber',active:'badge-green',completed:'badge-blue',cancelled:'badge-red'};
+  tbody.innerHTML=d.length?d.map(j=>{
+    const booked=DB.payments.some(p=>p.jobId===j.id);
+    return `<tr>
+      <td>${j.date}</td>
+      <td><strong>${j.name}</strong>${j.notes?`<div class="cell-secondary">${j.notes.substring(0,50)}${j.notes.length>50?'…':''}</div>`:''}${booked?'<div class="cell-secondary" style="color:var(--accent)">✓ Naplaćen</div>':''}</td>
+      <td>${j.client||'—'}</td>
+      <td><span class="badge ${pBadge[j.priority]||'badge-gray'}">${pLabel[j.priority]||j.priority}</span></td>
+      <td><span class="badge ${stBadge[j.status]||'badge-gray'}">${stLabel[j.status]||j.status}</span></td>
+      <td>${j.value?`<span class="amount">${fmt(j.value)}</span>`:'—'}</td>
+      <td><div class="td-actions">
+        ${!booked?`<button class="btn-card" onclick="openNaplati(${j.id})" style="color:var(--accent);border-color:var(--accent)">€ Naplati</button>`:''}
+        <button class="btn-edit" onclick="editJob(${j.id})">Izmijeni</button>
+        <button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button>
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Nema poslova.</div></div></td></tr>`;
+  document.getElementById('stat-jobs-total').textContent=DB.jobs.length;
+  document.getElementById('stat-jobs-active').textContent=DB.jobs.filter(j=>j.status==='active').length;
+  document.getElementById('stat-jobs-done').textContent=DB.jobs.filter(j=>j.status==='completed').length;
+  document.getElementById('stat-jobs-value').textContent=fmt(DB.jobs.reduce((s,j)=>s+(j.value||0),0));
+}
 function editEvidence(id){const e=DB.evidence.find(x=>x.id===id);if(!e)return;openModal('modal-evidence',id);document.getElementById('e-ime').value=e.ime||'';document.getElementById('e-prezime').value=e.prezime||'';document.getElementById('e-jmbg').value=e.jmbg||'';document.getElementById('e-telefon').value=e.telefon||'';document.getElementById('e-opstina').value=e.opstina||'';document.getElementById('e-ko').value=e.ko||'';document.getElementById('e-parcela').value=e.parcela||'';tempFiles.fotografije=[...(e.fotografije||[])];tempFiles.dwg=[...(e.dwg||[])];tempFiles.elaborat=[...(e.elaborat||[])];renderFilePreview('fotografije');renderFilePreview('dwg');renderFilePreview('elaborat');}
 
 // USER CARD
@@ -846,7 +931,7 @@ function showCard(id){
 function savePayment(){
   const date=document.getElementById('p-date').value,desc=document.getElementById('p-desc').value.trim(),amount=parseFloat(document.getElementById('p-amount').value);
   if(!date||!desc||isNaN(amount)||amount<=0){toast('Popunite sva obavezna polja.','red');return;}
-  const d={date,desc,category:document.getElementById('p-category').value,method:document.getElementById('p-method').value,type:document.getElementById('p-type').value,amount};
+  const d={date,desc,category:document.getElementById('p-category').value,method:document.getElementById('p-method').value,type:document.getElementById('p-type').value,amount,naRacunu:document.getElementById('p-naracunu').checked};
   if(editingId.payments){const idx=DB.payments.findIndex(x=>x.id===editingId.payments);if(idx!==-1)DB.payments[idx]={...DB.payments[idx],...d};toast('Plaćanje izmijenjeno.','green');}
   else{DB.payments.push({id:Date.now(),...d});toast('Plaćanje dodano.','green');}
   closeModal('modal-payment');render();autoSave();
@@ -855,35 +940,48 @@ function renderPayments(){
   const s=(document.getElementById('search-payments')?.value||'').toLowerCase();
   const tf=document.getElementById('filter-p-type')?.value||'';
   const yf=document.getElementById('filter-p-year')?.value||'';
+  const rf=document.getElementById('filter-p-racun')?.value||'';
   let d=sortData(DB.payments,sortState.payments.col,sortState.payments.dir);
   if(s)d=d.filter(p=>p.desc.toLowerCase().includes(s)||(p.category||'').toLowerCase().includes(s));
   if(tf)d=d.filter(p=>p.type===tf);
   if(yf)d=d.filter(p=>(p.date||'').startsWith(yf));
+  if(rf==='1')d=d.filter(p=>!!p.naRacunu);
+  if(rf==='0')d=d.filter(p=>!p.naRacunu);
   updateSortIcons('payments');
   const ysel=document.getElementById('filter-p-year'),cy=ysel?.value;
   if(ysel){const yrs=getYears(DB.payments);ysel.innerHTML='<option value="">Sve godine</option>'+yrs.map(y=>`<option value="${y}"${y===cy?' selected':''}>${y}</option>`).join('');}
   const tbody=document.getElementById('payments-tbody');
-  tbody.innerHTML=d.length?d.map(p=>`<tr><td>${p.date}</td><td>${p.desc}</td><td><span class="badge badge-gray">${p.category}</span></td><td>${p.method}</td><td><span class="badge ${p.type==='income'?'badge-green':'badge-red'}">${p.type==='income'?'Prihod':'Rashod'}</span></td><td><span class="amount ${p.type==='income'?'pos':'neg'}">${p.type==='income'?'+':'-'}${fmt(p.amount)}</span></td><td><div class="td-actions"><button class="btn-edit" onclick="editPayment(${p.id})">Izmijeni</button><button class="btn-del" onclick="del('payments',${p.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💳</div><div class="empty-text">Nema plaćanja.</div></div></td></tr>`;
+  tbody.innerHTML=d.length?d.map(p=>`<tr>
+    <td>${p.date}</td><td>${p.desc}${p.jobId?'<div class="cell-secondary">🔧 Iz posla</div>':''}</td>
+    <td><span class="badge badge-gray">${p.category}</span></td>
+    <td>${p.method}</td>
+    <td><span class="badge ${p.type==='income'?'badge-green':'badge-red'}">${p.type==='income'?'Prihod':'Rashod'}</span></td>
+    <td><span class="amount ${p.type==='income'?'pos':'neg'}">${p.type==='income'?'+':'-'}${fmt(p.amount)}</span></td>
+    <td style="text-align:center">${p.naRacunu?'<span title="Na računu" style="font-size:16px">🏦</span>':'<span style="color:var(--text4);font-size:12px">—</span>'}</td>
+    <td><div class="td-actions"><button class="btn-edit" onclick="editPayment(${p.id})">Izmijeni</button><button class="btn-del" onclick="del('payments',${p.id})">Obriši</button></div></td>
+  </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">💳</div><div class="empty-text">Nema plaćanja.</div></div></td></tr>`;
   const inc=DB.payments.filter(p=>p.type==='income').reduce((s,p)=>s+p.amount,0);
   const exp=DB.payments.filter(p=>p.type==='expense').reduce((s,p)=>s+p.amount,0);
   const bal=inc-exp;
-  document.getElementById('stat-income').textContent=fmt(inc);document.getElementById('stat-expenses').textContent=fmt(exp);
+  document.getElementById('stat-income').textContent=fmt(inc);
+  document.getElementById('stat-expenses').textContent=fmt(exp);
   const el=document.getElementById('stat-balance');el.textContent=(bal<0?'-':'')+fmt(Math.abs(bal));el.style.color=bal<0?'var(--red)':'var(--accent)';
+  // Racun saldo strip
+  const racunPay=DB.payments.filter(p=>p.naRacunu);
+  const racunIn=racunPay.filter(p=>p.type==='income').reduce((s,p)=>s+p.amount,0);
+  const racunOut=racunPay.filter(p=>p.type==='expense').reduce((s,p)=>s+p.amount,0);
+  const racunBal=racunIn-racunOut;
+  const strip=document.getElementById('racun-strip');
+  if(strip){
+    document.getElementById('strip-saldo').textContent=fmt(racunBal);
+    document.getElementById('strip-saldo').style.color=racunBal<0?'#ffaaaa':'white';
+    document.getElementById('strip-in').textContent='+'+fmt(racunIn);
+    document.getElementById('strip-out').textContent='-'+fmt(racunOut);
+    document.getElementById('strip-count').textContent=racunPay.length;
+    strip.style.display=racunPay.length?'flex':'none';
+  }
 }
 
-// JOBS
-const pLabel={low:'Nizak',medium:'Srednji',high:'Visok',urgent:'Hitan'};
-const pBadge={low:'badge-gray',medium:'badge-blue',high:'badge-amber',urgent:'badge-red'};
-const stLabel={pending:'Na čekanju',active:'Aktivan',completed:'Završen',cancelled:'Otkazan'};
-const stBadge={pending:'badge-amber',active:'badge-green',completed:'badge-blue',cancelled:'badge-red'};
-function saveJob(){
-  const date=document.getElementById('j-date').value,name=document.getElementById('j-name').value.trim();
-  if(!date||!name){toast('Unesite datum i naziv posla.','red');return;}
-  const d={date,name,client:document.getElementById('j-client').value.trim(),priority:document.getElementById('j-priority').value,status:document.getElementById('j-status').value,value:parseFloat(document.getElementById('j-value').value)||0,notes:document.getElementById('j-notes').value.trim()};
-  if(editingId.jobs){const idx=DB.jobs.findIndex(x=>x.id===editingId.jobs);if(idx!==-1)DB.jobs[idx]={...DB.jobs[idx],...d};toast('Posao izmijenjen.','green');}
-  else{DB.jobs.push({id:Date.now(),...d});toast('Posao dodan.','green');}
-  closeModal('modal-job');render();autoSave();
-}
 function renderJobs(){
   const s=(document.getElementById('search-jobs')?.value||'').toLowerCase();
   const sf=document.getElementById('filter-j-status')?.value||'';
@@ -1325,12 +1423,15 @@ function renderRacun() {
   tbody.innerHTML = data.length ? data.map(t=>`
     <tr>
       <td>${t.date}</td>
-      <td><strong>${t.desc}</strong>${t.note?`<div class="cell-secondary">${t.note}</div>`:''}</td>
+      <td>
+        <strong>${t.desc}</strong>
+        ${t.sourceId?'<div class="cell-secondary">📥 Uvezeno iz Plaćanja</div>':t.note?`<div class="cell-secondary">${t.note}</div>`:''}
+      </td>
       <td><span class="badge ${RACUN_KAT_BADGE[t.kat]||'badge-gray'}">${RACUN_KAT_LABELS[t.kat]||t.kat}</span></td>
       <td><span class="badge ${t.type==='uplata'?'badge-green':'badge-red'}">${t.type==='uplata'?'Uplata':'Isplata'}</span></td>
       <td><span class="amount ${t.type==='uplata'?'pos':'neg'}">${t.type==='uplata'?'+':'-'}${fmt(t.amount)}</span></td>
       <td><span class="amount" style="color:${(chronMap[t.id]||0)<0?'var(--red)':'var(--text2)'}">${fmt(chronMap[t.id]||0)}</span></td>
-      <td><div class="td-actions"><button class="btn-edit" onclick="editRacunTx(${t.id})">Izmijeni</button><button class="btn-del" onclick="delRacunTx(${t.id})">Obriši</button></div></td>
+      <td><div class="td-actions">${!t.sourceId?`<button class="btn-edit" onclick="editRacunTx(${t.id})">Izmijeni</button>`:''}<button class="btn-del" onclick="delRacunTx(${t.id})">Obriši</button></div></td>
     </tr>
   `).join('') : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏦</div><div class="empty-text">Nema transakcija. Dodajte prvu transakciju ili podesite početni saldo.</div></div></td></tr>`;
 }
@@ -1387,6 +1488,54 @@ function confirmNaplati() {
   closeModal('modal-naplati');
   render(); autoSave();
   toast('✓ Posao naplaćen! Prihod knjižen.', 'green');
+}
+
+
+// =========================================================
+// UVEZI IZ PLAĆANJA → RAČUN
+// =========================================================
+function uvezi_iz_placanja() {
+  const svaPlacanja = DB.payments;
+  if (!svaPlacanja.length) { toast('Nema plaćanja za uvoz.', 'red'); return; }
+
+  // Find which ones are already imported (by jobId or matching desc+date+amount)
+  const existing = new Set(DB.racun.transakcije.map(t => t.sourceId).filter(Boolean));
+  const nova = svaPlacanja.filter(p => !existing.has(p.id));
+
+  if (!nova.length) {
+    toast('Sva plaćanja su već uvezena u Račun.', 'green');
+    return;
+  }
+
+  const msg = `Uvesti ${nova.length} plaćanja u Račun?\n\n` +
+    `(${svaPlacanja.length - nova.length} već uvezenih se preskače)\n\n` +
+    `Prihodi → Uplata / Rashodi → Isplata`;
+
+  if (!confirm(msg)) return;
+
+  nova.forEach(p => {
+    // Map payment category to racun kategorija
+    let kat;
+    if (p.type === 'income') {
+      kat = p.jobId ? 'naplata' : (p.category === 'Plata' ? 'ostalo-in' : 'naplata');
+    } else {
+      kat = p.category === 'Plata' ? 'plata' : 'troskovi';
+    }
+    DB.racun.transakcije.push({
+      id: Date.now() + Math.random(),
+      date: p.date,
+      desc: p.desc,
+      type: p.type === 'income' ? 'uplata' : 'isplata',
+      kat,
+      amount: p.amount,
+      note: 'Uvezeno iz Plaćanja',
+      sourceId: p.id   // track source to avoid double-import
+    });
+  });
+
+  renderRacun();
+  autoSave();
+  toast('✓ Uvezeno ' + nova.length + ' plaćanja u Račun!', 'green');
 }
 
 // CSV
