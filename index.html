@@ -704,6 +704,10 @@ let DB={payments:[],jobs:[],evidence:[],racun:{pocetniSaldo:0,transakcije:[]}};
 let tempFiles={fotografije:[],dwg:[],elaborat:[]};
 let editingId={payments:null,jobs:null,evidence:null};
 let sortState={payments:{col:'date',dir:-1},jobs:{col:'date',dir:-1},evidence:{col:'prezime',dir:1},racunTx:{col:'date',dir:-1}};
+const pLabel={low:'Nizak',medium:'Srednji',high:'Visok',urgent:'Hitan'};
+const pBadge={low:'badge-gray',medium:'badge-blue',high:'badge-amber',urgent:'badge-red'};
+const stLabel={pending:'Na čekanju',active:'Aktivan',completed:'Završen',cancelled:'Otkazan'};
+const stBadge={pending:'badge-amber',active:'badge-green',completed:'badge-blue',cancelled:'badge-red'};
 let activeYear=null;
 let charts={};
 
@@ -874,10 +878,7 @@ function renderJobs(){
   const ysel=document.getElementById('filter-j-year'),cy=ysel?.value;
   if(ysel){const yrs=getYears(DB.jobs);ysel.innerHTML='<option value="">Sve godine</option>'+yrs.map(y=>`<option value="${y}"${y===cy?' selected':''}>${y}</option>`).join('');}
   const tbody=document.getElementById('jobs-tbody');
-  const pLabel={low:'Nizak',medium:'Srednji',high:'Visok',urgent:'Hitan'};
-  const pBadge={low:'badge-gray',medium:'badge-blue',high:'badge-amber',urgent:'badge-red'};
-  const stLabel={pending:'Na čekanju',active:'Aktivan',completed:'Završen',cancelled:'Otkazan'};
-  const stBadge={pending:'badge-amber',active:'badge-green',completed:'badge-blue',cancelled:'badge-red'};
+
   tbody.innerHTML=d.length?d.map(j=>{
     const booked=DB.payments.some(p=>p.jobId===j.id);
     return `<tr>
@@ -1017,22 +1018,7 @@ function renderPayments(){
   }
 }
 
-function renderJobs(){
-  const s=(document.getElementById('search-jobs')?.value||'').toLowerCase();
-  const sf=document.getElementById('filter-j-status')?.value||'';
-  const yf=document.getElementById('filter-j-year')?.value||'';
-  let d=sortData(DB.jobs,sortState.jobs.col,sortState.jobs.dir);
-  if(s)d=d.filter(j=>j.name.toLowerCase().includes(s)||(j.client||'').toLowerCase().includes(s));
-  if(sf)d=d.filter(j=>j.status===sf);if(yf)d=d.filter(j=>(j.date||'').startsWith(yf));
-  updateSortIcons('jobs');
-  const ysel=document.getElementById('filter-j-year'),cy=ysel?.value;
-  if(ysel){const yrs=getYears(DB.jobs);ysel.innerHTML='<option value="">Sve godine</option>'+yrs.map(y=>`<option value="${y}"${y===cy?' selected':''}>${y}</option>`).join('');}
-  const tbody=document.getElementById('jobs-tbody');
-  tbody.innerHTML=d.length?d.map(j=>`<tr><td>${j.date}</td><td><strong>${j.name}</strong>${j.notes?`<div class="cell-secondary">${j.notes.substring(0,50)}${j.notes.length>50?'…':''}</div>`:''}</td><td>${j.client||'—'}</td><td><span class="badge ${pBadge[j.priority]||'badge-gray'}">${pLabel[j.priority]||j.priority}</span></td><td><span class="badge ${stBadge[j.status]||'badge-gray'}">${stLabel[j.status]||j.status}</span></td><td>${j.value?`<span class="amount">${fmt(j.value)}</span>`:'—'}</td><td><div class="td-actions"><button class="btn-card" onclick="openNaplati(${j.id})" style="color:var(--accent);border-color:var(--accent)" title="Naplati posao">€ Naplati</button><button class="btn-edit" onclick="editJob(${j.id})">Izmijeni</button><button class="btn-del" onclick="del('jobs',${j.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔧</div><div class="empty-text">Nema poslova.</div></div></td></tr>`;
-  document.getElementById('stat-jobs-total').textContent=DB.jobs.length;document.getElementById('stat-jobs-active').textContent=DB.jobs.filter(j=>j.status==='active').length;document.getElementById('stat-jobs-done').textContent=DB.jobs.filter(j=>j.status==='completed').length;document.getElementById('stat-jobs-value').textContent=fmt(DB.jobs.reduce((s,j)=>s+(j.value||0),0));
-}
 
-// EVIDENCE
 function saveEvidence(){
   const ime=document.getElementById('e-ime').value.trim(),prezime=document.getElementById('e-prezime').value.trim();
   if(!ime||!prezime){toast('Ime i prezime su obavezni.','red');return;}
