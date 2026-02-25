@@ -348,7 +348,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         <div><div class="page-eyebrow">Finansije</div><div class="page-title">Bankovni račun</div></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline" onclick="openRacunSetup()">⚙ Postavke</button>
-          <button class="btn btn-outline" onclick="uvezi_iz_placanja()" style="border-color:var(--accent);color:var(--accent)">↓ Uvezi iz Plaćanja</button>
+          <button class="btn btn-outline" onclick="openUveziModal()" style="border-color:var(--accent);color:var(--accent)">↓ Uvezi iz Plaćanja</button>
           <button class="btn btn-primary" onclick="openModal('modal-racun-tx')">＋ Dodaj transakciju</button>
         </div>
       </div>
@@ -604,6 +604,41 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-naplati')">Otkaži</button>
       <button class="btn btn-primary" onclick="confirmNaplati()">Naplati ✓</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: UVEZI IZ PLAĆANJA (ODABIR) -->
+<div class="modal-overlay" id="modal-uvezi">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">Uvezi plaćanja u Račun</div>
+      <button class="modal-close" onclick="closeModal('modal-uvezi')">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="uvezi_select_all(true)">Označi sve</button>
+      <button class="btn btn-outline btn-sm" onclick="uvezi_select_all(false)">Odznači sve</button>
+      <span style="font-size:12px;color:var(--text3);margin-left:auto" id="uvezi-count-label">0 odabrano</span>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;max-height:380px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--surface2)">
+            <th style="width:36px;padding:8px 12px;border-bottom:1px solid var(--border)"></th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Datum</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Opis</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Tip</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Iznos</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Status</th>
+          </tr>
+        </thead>
+        <tbody id="uvezi-tbody"></tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-uvezi')">Otkaži</button>
+      <button class="btn btn-primary" onclick="potvrdi_uvezi()" id="btn-potvrdi-uvezi" disabled>Uvezi odabrane →</button>
     </div>
   </div>
 </div>
@@ -1492,51 +1527,70 @@ function confirmNaplati() {
 
 
 // =========================================================
-// UVEZI IZ PLAĆANJA → RAČUN
+// UVEZI IZ PLAĆANJA → RAČUN (RUČNI ODABIR)
 // =========================================================
-function uvezi_iz_placanja() {
-  const svaPlacanja = DB.payments;
-  if (!svaPlacanja.length) { toast('Nema plaćanja za uvoz.', 'red'); return; }
+function paymentToRacunKat(p) {
+  if (p.type === 'income') return p.jobId ? 'naplata' : (p.category === 'Plata' ? 'ostalo-in' : 'naplata');
+  return p.category === 'Plata' ? 'plata' : 'troskovi';
+}
 
-  // Find which ones are already imported (by jobId or matching desc+date+amount)
+function openUveziModal() {
+  if (!DB.payments.length) { toast('Nema plaćanja za uvoz.', 'red'); return; }
   const existing = new Set(DB.racun.transakcije.map(t => t.sourceId).filter(Boolean));
-  const nova = svaPlacanja.filter(p => !existing.has(p.id));
+  const tbody = document.getElementById('uvezi-tbody');
+  const sorted = [...DB.payments].sort((a,b) => b.date.localeCompare(a.date));
+  tbody.innerHTML = sorted.map(p => {
+    const imported = existing.has(p.id);
+    return `<tr style="border-bottom:1px solid var(--border);${imported?'opacity:.55':''}">
+      <td style="padding:9px 12px;text-align:center">
+        <input type="checkbox" class="uvezi-chk" data-id="${p.id}" ${imported?'disabled checked':''} onchange="uvezi_update_count()" style="width:auto;cursor:${imported?'default':'pointer'}">
+      </td>
+      <td style="padding:9px 12px;font-size:13px">${p.date}</td>
+      <td style="padding:9px 12px;font-size:13px"><strong>${p.desc}</strong>${p.jobId?'<div style="font-size:11px;color:var(--text3)">🔧 Iz posla</div>':''}</td>
+      <td style="padding:9px 12px"><span class="badge ${p.type==='income'?'badge-green':'badge-red'}">${p.type==='income'?'Prihod':'Rashod'}</span></td>
+      <td style="padding:9px 12px"><span class="amount ${p.type==='income'?'pos':'neg'}">${p.type==='income'?'+':'-'}${fmt(p.amount)}</span></td>
+      <td style="padding:9px 12px">${imported?'<span style="font-size:11px;color:var(--accent);font-weight:600">✓ Uvezeno</span>':'<span style="font-size:11px;color:var(--text4)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+  uvezi_update_count();
+  document.getElementById('modal-uvezi').classList.add('open');
+}
 
-  if (!nova.length) {
-    toast('Sva plaćanja su već uvezena u Račun.', 'green');
-    return;
-  }
+function uvezi_select_all(state) {
+  document.querySelectorAll('.uvezi-chk:not(:disabled)').forEach(chk => chk.checked = state);
+  uvezi_update_count();
+}
 
-  const msg = `Uvesti ${nova.length} plaćanja u Račun?\n\n` +
-    `(${svaPlacanja.length - nova.length} već uvezenih se preskače)\n\n` +
-    `Prihodi → Uplata / Rashodi → Isplata`;
+function uvezi_update_count() {
+  const checked = document.querySelectorAll('.uvezi-chk:not(:disabled):checked').length;
+  document.getElementById('uvezi-count-label').textContent = checked + ' odabrano';
+  document.getElementById('btn-potvrdi-uvezi').disabled = checked === 0;
+}
 
-  if (!confirm(msg)) return;
-
-  nova.forEach(p => {
-    // Map payment category to racun kategorija
-    let kat;
-    if (p.type === 'income') {
-      kat = p.jobId ? 'naplata' : (p.category === 'Plata' ? 'ostalo-in' : 'naplata');
-    } else {
-      kat = p.category === 'Plata' ? 'plata' : 'troskovi';
-    }
+function potvrdi_uvezi() {
+  const selectedIds = new Set(
+    [...document.querySelectorAll('.uvezi-chk:not(:disabled):checked')].map(chk => parseInt(chk.dataset.id))
+  );
+  if (!selectedIds.size) { toast('Niste odabrali nijedno plaćanje.', 'red'); return; }
+  const toImport = DB.payments.filter(p => selectedIds.has(p.id));
+  toImport.forEach(p => {
     DB.racun.transakcije.push({
       id: Date.now() + Math.random(),
       date: p.date,
       desc: p.desc,
       type: p.type === 'income' ? 'uplata' : 'isplata',
-      kat,
+      kat: paymentToRacunKat(p),
       amount: p.amount,
       note: 'Uvezeno iz Plaćanja',
-      sourceId: p.id   // track source to avoid double-import
+      sourceId: p.id
     });
   });
-
+  closeModal('modal-uvezi');
   renderRacun();
   autoSave();
-  toast('✓ Uvezeno ' + nova.length + ' plaćanja u Račun!', 'green');
+  toast('Uvezeno ' + toImport.length + ' plaćanja u Račun!', 'green');
 }
+
 
 // CSV
 function exportCSV(type){
