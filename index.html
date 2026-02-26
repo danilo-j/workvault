@@ -240,10 +240,14 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div class="nav-item active" onclick="showPage('payments')" id="nav-payments"><span class="nav-icon">💳</span>Plaćanja<span class="nav-badge" id="badge-payments">0</span></div>
       <div class="nav-item" onclick="showPage('jobs')" id="nav-jobs"><span class="nav-icon">🔧</span>Poslovi<span class="nav-badge" id="badge-jobs">0</span></div>
       <div class="nav-item" onclick="showPage('racun')" id="nav-racun"><span class="nav-icon">🏦</span>Račun<span class="nav-badge" id="badge-racun-saldo" style="background:var(--blue)">€0</span></div>
-      <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence"><span class="nav-icon">📋</span>Elaborati/Legalizacija<span class="nav-badge" id="badge-evidence">0</span></div>
+      <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence"><span class="nav-icon">📋</span>Evidencija<span class="nav-badge" id="badge-evidence">0</span></div>
       <div class="nav-item" onclick="showPage('reports')" id="nav-reports"><span class="nav-icon">📊</span>Izvještaji</div>
     </div>
     <div class="drive-status"><div class="drive-dot" id="drive-dot"></div><span id="drive-status-text">Nije sinhronizovano</span></div>
+    <div style="padding:8px 12px;display:flex;gap:6px">
+      <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px" onclick="manualBackup()">💾 Backup</button>
+      <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px" onclick="showBackups()">📂 Istorija</button>
+    </div>
     <div class="sync-btns">
       <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="saveToDrive()">↑ Sačuvaj na Drive</button>
       <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="loadFromDrive()">↓ Učitaj sa Drive</button>
@@ -512,6 +516,23 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div class="form-group"><label>Opština</label><input type="text" id="e-opstina" placeholder="Opština"></div>
       <div class="form-group"><label>KO</label><input type="text" id="e-ko" placeholder="Katastarska opština"></div>
       <div class="form-group full"><label>Parcela</label><input type="text" id="e-parcela" placeholder="Broj parcele"></div>
+      <div class="form-group"><label>Ime oca</label><input type="text" id="e-imeoca" placeholder="Ime oca"></div>
+      <div class="form-group"><label>LN broj</label><input type="text" id="e-ln" placeholder="List nepokretnosti"></div>
+      <div class="form-group"><label>Spratnost objekta</label>
+        <select id="e-spratnost">
+          <option value="">— nije uneseno —</option>
+          <option value="P">P (prizemlje)</option>
+          <option value="P+1">P+1</option>
+          <option value="P+2">P+2</option>
+          <option value="P+3">P+3</option>
+          <option value="P+Pk">P+Pk (potkrovlje)</option>
+          <option value="Pk">Pk (samo potkrovlje)</option>
+          <option value="Su+P">Su+P (suteren)</option>
+          <option value="Su+P+1">Su+P+1</option>
+          <option value="Po">Po (podrum)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Godina izgradnje</label><input type="number" id="e-godina" placeholder="npr. 1998" min="1800" max="2100"></div>
       <hr class="form-divider">
       <div class="form-group full"><label>📷 Fotografije</label><div class="file-zone"><input type="file" id="e-fotografije" multiple accept="image/*" onchange="handleFiles(this,'fotografije')"><div class="file-zone-icon">🖼️</div><div class="file-zone-text">Kliknite ili prevucite fotografije ovdje</div></div><div class="file-preview" id="fp-fotografije"></div></div>
       <div class="form-group full"><label>📐 DWG fajlovi</label><div class="file-zone"><input type="file" id="e-dwg" multiple accept=".dwg,.dxf,.pdf" onchange="handleFiles(this,'dwg')"><div class="file-zone-icon">📐</div><div class="file-zone-text">Kliknite ili prevucite DWG/DXF fajlove ovdje</div></div><div class="file-preview" id="fp-dwg"></div></div>
@@ -643,6 +664,39 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
   </div>
 </div>
 
+
+<!-- MODAL: BACKUP ISTORIJA -->
+<div class="modal-overlay" id="modal-backups">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">📂 Historija backupa</div>
+      <button class="modal-close" onclick="closeModal('modal-backups')">✕</button>
+    </div>
+    <div class="import-info" style="margin-bottom:14px">
+      Backupi se automatski prave na svakih 10 snimanja. Čuva se posljednjih 30 backupa.
+      Folder lokacija: <strong>WorkVault/backups/</strong> na vašem Google Driveu.
+    </div>
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;max-height:400px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--surface2)">
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Datum i vrijeme</th>
+            <th style="padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Veličina</th>
+            <th style="padding:8px 12px;border-bottom:1px solid var(--border)"></th>
+          </tr>
+        </thead>
+        <tbody id="backup-list-body">
+          <tr><td colspan="3" style="padding:20px;text-align:center;color:var(--text3)">Učitavam...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-backups')">Zatvori</button>
+      <button class="btn btn-primary" onclick="manualBackup()">💾 Napravi backup sada</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- MODAL IMPORT -->
@@ -760,40 +814,347 @@ async function onSignedIn(){
 function signOut(){if(!confirm('Odjaviti se?'))return;accessToken=null;sessionStorage.removeItem('wv_token');DB={payments:[],jobs:[],evidence:[]};document.getElementById('app').classList.remove('visible');document.getElementById('login-screen').style.display='flex';setDriveStatus('','Nije sinhronizovano');}
 
 // DRIVE
-async function findDriveFile(){
-  const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=name%3D'${DRIVE_FILE_NAME}'%20and%20trashed%3Dfalse&spaces=drive&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
-  const d=await r.json();return d.files&&d.files.length?d.files[0].id:null;
+async 
+// =========================================================
+// DRIVE — FOLDER STRUKTURA + BACKUP + FILE STORAGE
+// =========================================================
+const FOLDER_NAME    = 'WorkVault';
+const BACKUPS_FOLDER = 'backups';
+const FILES_FOLDER   = 'files';
+
+let driveFolderIds = { root: null, backups: null, files: null };
+let driveDataFileId = null;
+
+// --- HELPERS ---
+async function driveReq(url, opts = {}) {
+  const r = await fetch(url, {
+    ...opts,
+    headers: { Authorization: 'Bearer ' + accessToken, ...(opts.headers || {}) }
+  });
+  if (!r.ok) throw new Error('Drive HTTP ' + r.status + ' ' + url.substring(0, 80));
+  return r.json();
 }
-async function saveToDrive(){
-  if(!accessToken){toast('Niste prijavljeni.','red');return;}
-  setDriveStatus('syncing','Čuvam na Drive...');
-  try{
-    const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-    if(!driveFileId)driveFileId=await findDriveFile();
-    const fd=new FormData();
-    fd.append('metadata',new Blob([JSON.stringify(driveFileId?{name:DRIVE_FILE_NAME}:{name:DRIVE_FILE_NAME,mimeType:'application/json'})],{type:'application/json'}));
-    fd.append('file',blob);
-    const url=driveFileId?`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`:'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-    const r=await fetch(url,{method:driveFileId?'PATCH':'POST',headers:{Authorization:'Bearer '+accessToken},body:fd});
-    if(!r.ok)throw new Error('Drive error '+r.status);
-    if(!driveFileId){const d=await r.json();driveFileId=d.id;}
-    setDriveStatus('ok','Sačuvano · '+new Date().toLocaleTimeString('sr'));toast('✓ Sačuvano na Google Drive!','green');
-  }catch(err){setDriveStatus('','Greška pri čuvanju');toast('Greška: '+err.message,'red');}
+
+async function driveFind(name, parentId, mimeType) {
+  let q = `name='${name}' and trashed=false`;
+  if (parentId) q += ` and '${parentId}' in parents`;
+  if (mimeType) q += ` and mimeType='${mimeType}'`;
+  const d = await driveReq(
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive`
+  );
+  return d.files && d.files.length ? d.files[0] : null;
 }
-async function loadFromDrive(){
-  if(!accessToken)return;setDriveStatus('syncing','Učitavam...');
-  try{
-    if(!driveFileId)driveFileId=await findDriveFile();
-    if(!driveFileId){setDriveStatus('','Novi fajl');render();return;}
-    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
-    if(!r.ok)throw new Error('Download failed');
-    const d=await r.json();
-    if(d.payments)DB.payments=d.payments;if(d.jobs)DB.jobs=d.jobs;if(d.evidence)DB.evidence=d.evidence;if(d.racun)DB.racun=d.racun;
-    setDriveStatus('ok','Učitano · '+new Date().toLocaleTimeString('sr'));render();toast('✓ Podaci učitani!','green');
-  }catch(err){setDriveStatus('','Greška');toast('Greška: '+err.message,'red');render();}
+
+async function driveCreateFolder(name, parentId) {
+  const meta = { name, mimeType: 'application/vnd.google-apps.folder' };
+  if (parentId) meta.parents = [parentId];
+  const d = await driveReq('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(meta)
+  });
+  return d.id;
 }
-let saveTimer=null;
-function autoSave(){clearTimeout(saveTimer);setDriveStatus('syncing','Čekam...');saveTimer=setTimeout(()=>saveToDrive(),2000);}
+
+async function driveUploadFile(blob, name, parentId, existingId = null) {
+  const meta = { name };
+  if (parentId && !existingId) meta.parents = [parentId];
+  const fd = new FormData();
+  fd.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+  fd.append('file', blob);
+  const url = existingId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart&fields=id`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`;
+  const d = await driveReq(url, { method: existingId ? 'PATCH' : 'POST', body: fd });
+  return d.id;
+}
+
+async function driveGetFileAsText(fileId) {
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { Authorization: 'Bearer ' + accessToken }
+  });
+  if (!r.ok) throw new Error('Download failed ' + r.status);
+  return r.text();
+}
+
+async function driveGetFileAsBlob(fileId) {
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { Authorization: 'Bearer ' + accessToken }
+  });
+  if (!r.ok) throw new Error('Download failed ' + r.status);
+  return r.blob();
+}
+
+// --- FOLDER SETUP ---
+async function ensureFolders() {
+  // Root WorkVault folder
+  if (!driveFolderIds.root) {
+    let f = await driveFind(FOLDER_NAME, null, 'application/vnd.google-apps.folder');
+    driveFolderIds.root = f ? f.id : await driveCreateFolder(FOLDER_NAME, null);
+  }
+  // Backups subfolder
+  if (!driveFolderIds.backups) {
+    let f = await driveFind(BACKUPS_FOLDER, driveFolderIds.root, 'application/vnd.google-apps.folder');
+    driveFolderIds.backups = f ? f.id : await driveCreateFolder(BACKUPS_FOLDER, driveFolderIds.root);
+  }
+  // Files subfolder
+  if (!driveFolderIds.files) {
+    let f = await driveFind(FILES_FOLDER, driveFolderIds.root, 'application/vnd.google-apps.folder');
+    driveFolderIds.files = f ? f.id : await driveCreateFolder(FILES_FOLDER, driveFolderIds.root);
+  }
+}
+
+// --- BACKUP ---
+async function createBackup() {
+  try {
+    await ensureFolders();
+    const now = new Date();
+    const ts = now.toISOString().replace('T', '_').substring(0, 16).replace(':', '-');
+    const backupName = `backup_${ts}.json`;
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    await driveUploadFile(blob, backupName, driveFolderIds.backups);
+    // Clean old backups — keep last 30
+    await pruneBackups(30);
+    console.log('Backup created:', backupName);
+  } catch (err) {
+    console.warn('Backup failed (non-critical):', err.message);
+  }
+}
+
+async function pruneBackups(keepCount) {
+  try {
+    const q = encodeURIComponent(`'${driveFolderIds.backups}' in parents and trashed=false`);
+    const d = await driveReq(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime&fields=files(id,name,createdTime)&pageSize=100`
+    );
+    const files = d.files || [];
+    if (files.length <= keepCount) return;
+    const toDelete = files.slice(0, files.length - keepCount);
+    for (const f of toDelete) {
+      await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + accessToken }
+      });
+    }
+    console.log(`Pruned ${toDelete.length} old backups`);
+  } catch (err) {
+    console.warn('Prune failed:', err.message);
+  }
+}
+
+// --- SAVE / LOAD ---
+async function saveToDrive() {
+  if (!accessToken) { toast('Niste prijavljeni.', 'red'); return; }
+  setDriveStatus('syncing', 'Čuvam na Drive...');
+  try {
+    await ensureFolders();
+    // Save main data (without base64 files — those are on Drive separately)
+    const dbClean = stripBase64(DB);
+    const blob = new Blob([JSON.stringify(dbClean, null, 2)], { type: 'application/json' });
+    if (!driveDataFileId) {
+      const f = await driveFind('workvault-data.json', driveFolderIds.root);
+      driveDataFileId = f ? f.id : null;
+    }
+    driveDataFileId = await driveUploadFile(blob, 'workvault-data.json', driveFolderIds.root, driveDataFileId);
+    setDriveStatus('ok', 'Sačuvano · ' + new Date().toLocaleTimeString('sr'));
+    toast('✓ Sačuvano na Google Drive!', 'green');
+    // Backup every 10th save (non-blocking)
+    saveCounter = (saveCounter || 0) + 1;
+    if (saveCounter % 10 === 1) createBackup();
+  } catch (err) {
+    setDriveStatus('', 'Greška pri čuvanju');
+    toast('Greška: ' + err.message, 'red');
+  }
+}
+let saveCounter = 0;
+
+function stripBase64(db) {
+  // Return DB copy where file data is replaced with driveFileId reference
+  const clone = JSON.parse(JSON.stringify(db));
+  for (const ev of clone.evidence || []) {
+    for (const field of ['fotografije', 'dwg', 'elaborat']) {
+      if (!ev[field]) continue;
+      ev[field] = ev[field].map(f => ({
+        name: f.name,
+        type: f.type,
+        driveId: f.driveId || null
+        // data (base64) intentionally stripped
+      }));
+    }
+  }
+  return clone;
+}
+
+async function loadFromDrive() {
+  if (!accessToken) return;
+  setDriveStatus('syncing', 'Učitavam...');
+  try {
+    await ensureFolders();
+    if (!driveDataFileId) {
+      const f = await driveFind('workvault-data.json', driveFolderIds.root);
+      driveDataFileId = f ? f.id : null;
+    }
+    if (!driveDataFileId) { setDriveStatus('', 'Novi fajl'); render(); hideLoading(); return; }
+    const text = await driveGetFileAsText(driveDataFileId);
+    const d = JSON.parse(text);
+    if (d.payments) DB.payments = d.payments;
+    if (d.jobs)     DB.jobs     = d.jobs;
+    if (d.evidence) DB.evidence = d.evidence;
+    if (d.racun)    DB.racun    = d.racun;
+    setDriveStatus('ok', 'Učitano · ' + new Date().toLocaleTimeString('sr'));
+    render();
+    toast('✓ Podaci učitani!', 'green');
+  } catch (err) {
+    setDriveStatus('', 'Greška');
+    toast('Greška učitavanja: ' + err.message, 'red');
+    render();
+  } finally {
+    hideLoading();
+  }
+}
+
+let saveTimer = null;
+function autoSave() {
+  clearTimeout(saveTimer);
+  setDriveStatus('syncing', 'Čekam...');
+  saveTimer = setTimeout(() => saveToDrive(), 2000);
+}
+
+// --- FILE UPLOAD TO DRIVE ---
+async function uploadFileToDrive(file) {
+  await ensureFolders();
+  const blob = new Blob([file.data], { type: file.type });
+  // Convert base64 to blob
+  const base64 = file.data.split(',')[1];
+  const byteArr = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const realBlob = new Blob([byteArr], { type: file.type });
+  const fileId = await driveUploadFile(realBlob, file.name, driveFolderIds.files);
+  return fileId;
+}
+
+async function saveEvidenceFiles(evidenceId) {
+  const ev = DB.evidence.find(e => e.id === evidenceId);
+  if (!ev) return;
+  let changed = false;
+  for (const field of ['fotografije', 'dwg', 'elaborat']) {
+    if (!ev[field]) continue;
+    for (const f of ev[field]) {
+      if (f.data && !f.driveId) {
+        try {
+          showLoading('Uploadujem ' + f.name + '...');
+          f.driveId = await uploadFileToDrive(f);
+          f.data = null; // remove base64 after upload
+          changed = true;
+        } catch (err) {
+          console.warn('File upload failed:', f.name, err.message);
+        }
+      }
+    }
+  }
+  hideLoading();
+  return changed;
+}
+
+async function openAttachment(rid, field, idx) {
+  const rec = DB.evidence.find(e => e.id === rid);
+  if (!rec) return;
+  const f = rec[field][idx];
+  if (!f) { toast('Fajl nije pronađen.', 'red'); return; }
+  // If we have base64 locally, use it
+  if (f.data) {
+    if (f.type && f.type.startsWith('image/')) {
+      const w = window.open();
+      w.document.write(`<title>${f.name}</title><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${f.data}" style="max-width:100%;max-height:100vh;object-fit:contain"></body>`);
+    } else {
+      const a = document.createElement('a'); a.href = f.data; a.download = f.name; a.click();
+    }
+    return;
+  }
+  // Otherwise fetch from Drive
+  if (f.driveId) {
+    try {
+      showLoading('Preuzimam ' + f.name + '...');
+      const blob = await driveGetFileAsBlob(f.driveId);
+      const url = URL.createObjectURL(blob);
+      if (f.type && f.type.startsWith('image/')) {
+        const w = window.open(); w.location = url;
+      } else {
+        const a = document.createElement('a'); a.href = url; a.download = f.name; a.click();
+      }
+      hideLoading();
+    } catch (err) {
+      hideLoading();
+      toast('Greška preuzimanja: ' + err.message, 'red');
+    }
+    return;
+  }
+  toast('Fajl nije dostupan — ni lokalno ni na Drive.', 'red');
+}
+
+// --- BACKUP MANAGER (UI) ---
+async function showBackups() {
+  try {
+    showLoading('Učitavam backup listu...');
+    await ensureFolders();
+    const q = encodeURIComponent(`'${driveFolderIds.backups}' in parents and trashed=false`);
+    const d = await driveReq(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&fields=files(id,name,createdTime,size)&pageSize=50`
+    );
+    hideLoading();
+    const files = d.files || [];
+    if (!files.length) { toast('Nema dostupnih backupa.', 'red'); return; }
+    const list = files.map(f => {
+      const dt = new Date(f.createdTime).toLocaleString('sr');
+      const kb = f.size ? Math.round(f.size / 1024) + ' KB' : '—';
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:8px 12px;font-size:13px">${f.name.replace('backup_','').replace('.json','').replace('_',', ')}</td>
+        <td style="padding:8px 12px;font-size:12px;color:var(--text3)">${kb}</td>
+        <td style="padding:8px 12px"><button class="btn-edit" onclick="restoreBackup('${f.id}','${f.name}')">Vrati</button></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('backup-list-body').innerHTML = list;
+    document.getElementById('modal-backups').classList.add('open');
+  } catch (err) {
+    hideLoading();
+    toast('Greška: ' + err.message, 'red');
+  }
+}
+
+async function restoreBackup(fileId, name) {
+  if (!confirm(`Vratiti backup "${name}"?\n\nOvo će ZAMIJENITI sve trenutne podatke. Trenutno stanje će se sačuvati kao novi backup.`)) return;
+  try {
+    showLoading('Vraćam backup...');
+    await createBackup(); // save current state first
+    const text = await driveGetFileAsText(fileId);
+    const d = JSON.parse(text);
+    if (d.payments) DB.payments = d.payments;
+    if (d.jobs)     DB.jobs     = d.jobs;
+    if (d.evidence) DB.evidence = d.evidence;
+    if (d.racun)    DB.racun    = d.racun;
+    hideLoading();
+    closeModal('modal-backups');
+    render();
+    toast('✓ Backup vraćen uspješno!', 'green');
+    await saveToDrive();
+  } catch (err) {
+    hideLoading();
+    toast('Greška vraćanja: ' + err.message, 'red');
+  }
+}
+
+async function manualBackup() {
+  try {
+    showLoading('Pravim backup...');
+    await ensureFolders();
+    await createBackup();
+    hideLoading();
+    toast('✓ Backup napravljen!', 'green');
+  } catch (err) {
+    hideLoading();
+    toast('Greška: ' + err.message, 'red');
+  }
+}
+
 
 // NAV
 function showPage(name){
@@ -818,7 +1179,8 @@ function openModal(id,eid=null){
 }
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
-  document.querySelectorAll('#'+id+' input[type=text],#'+id+' input[type=number],#'+id+' textarea').forEach(el=>el.value='');
+  document.querySelectorAll('#'+id+' input[type=text],#'+id+' input[type=number],#'+id+' input[type=date],#'+id+' textarea').forEach(el=>el.value='');
+  document.querySelectorAll('#'+id+' select').forEach(el=>el.selectedIndex=0);
 }
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
 
@@ -829,7 +1191,12 @@ function resetEvidenceForm(){
   ['e-ime','e-prezime','e-jmbg','e-telefon','e-opstina','e-ko','e-parcela'].forEach(id=>document.getElementById(id).value='');
 }
 function handleFiles(input,field){
-  Array.from(input.files).forEach(file=>{const r=new FileReader();r.onload=e=>{tempFiles[field].push({name:file.name,type:file.type,data:e.target.result});renderFilePreview(field);};r.readAsDataURL(file);});input.value='';
+  Array.from(input.files).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{tempFiles[field].push({name:file.name,type:file.type,data:e.target.result,driveId:null});renderFilePreview(field);};
+    r.readAsDataURL(file);
+  });
+  input.value='';
 }
 function renderFilePreview(field){document.getElementById('fp-'+field).innerHTML=tempFiles[field].map((f,i)=>`<div class="file-chip"><span>${fileIcon(f.type)} ${f.name}</span><span class="file-chip-del" onclick="removeFile('${field}',${i})">×</span></div>`).join('');}
 function removeFile(field,idx){tempFiles[field].splice(idx,1);renderFilePreview(field);}
@@ -900,7 +1267,11 @@ function renderJobs(){
   document.getElementById('stat-jobs-done').textContent=DB.jobs.filter(j=>j.status==='completed').length;
   document.getElementById('stat-jobs-value').textContent=fmt(DB.jobs.reduce((s,j)=>s+(j.value||0),0));
 }
-function editEvidence(id){const e=DB.evidence.find(x=>x.id===id);if(!e)return;openModal('modal-evidence',id);document.getElementById('e-ime').value=e.ime||'';document.getElementById('e-prezime').value=e.prezime||'';document.getElementById('e-jmbg').value=e.jmbg||'';document.getElementById('e-telefon').value=e.telefon||'';document.getElementById('e-opstina').value=e.opstina||'';document.getElementById('e-ko').value=e.ko||'';document.getElementById('e-parcela').value=e.parcela||'';tempFiles.fotografije=[...(e.fotografije||[])];tempFiles.dwg=[...(e.dwg||[])];tempFiles.elaborat=[...(e.elaborat||[])];renderFilePreview('fotografije');renderFilePreview('dwg');renderFilePreview('elaborat');}
+function editEvidence(id){const e=DB.evidence.find(x=>x.id===id);if(!e)return;openModal('modal-evidence',id);document.getElementById('e-ime').value=e.ime||'';document.getElementById('e-prezime').value=e.prezime||'';document.getElementById('e-jmbg').value=e.jmbg||'';document.getElementById('e-telefon').value=e.telefon||'';document.getElementById('e-opstina').value=e.opstina||'';document.getElementById('e-ko').value=e.ko||'';document.getElementById('e-parcela').value=e.parcela||'';
+  document.getElementById('e-imeoca').value=e.imeoca||'';
+  document.getElementById('e-ln').value=e.ln||'';
+  document.getElementById('e-spratnost').value=e.spratnost||'';
+  document.getElementById('e-godina').value=e.godina||'';tempFiles.fotografije=[...(e.fotografije||[])];tempFiles.dwg=[...(e.dwg||[])];tempFiles.elaborat=[...(e.elaborat||[])];renderFilePreview('fotografije');renderFilePreview('dwg');renderFilePreview('elaborat');}
 
 // USER CARD
 const sLabel={pending:'Na čekanju',active:'Aktivan',completed:'Završen',cancelled:'Otkazan'};
@@ -934,6 +1305,10 @@ function showCard(id){
       <div class="card-field"><div class="card-field-label">Opština</div><div class="card-field-value">${e.opstina||'—'}</div></div>
       <div class="card-field"><div class="card-field-label">KO</div><div class="card-field-value">${e.ko||'—'}</div></div>
       <div class="card-field"><div class="card-field-label">Parcela</div><div class="card-field-value">${e.parcela||'—'}</div></div>
+      <div class="card-field"><div class="card-field-label">Ime oca</div><div class="card-field-value">${e.imeoca||'—'}</div></div>
+      <div class="card-field"><div class="card-field-label">LN broj</div><div class="card-field-value">${e.ln||'—'}</div></div>
+      <div class="card-field"><div class="card-field-label">Spratnost</div><div class="card-field-value">${e.spratnost||'—'}</div></div>
+      <div class="card-field"><div class="card-field-label">God. izgradnje</div><div class="card-field-value">${e.godina||'—'}</div></div>
       <div class="card-field"><div class="card-field-label">Fajlovi</div><div class="card-field-value">${(e.fotografije||[]).length} foto · ${(e.dwg||[]).length} DWG · ${(e.elaborat||[]).length} elab.</div></div>
     </div>
 
@@ -950,7 +1325,7 @@ function showCard(id){
     </table>`:''}
 
     ${relPayments.length?`
-    <div class="card-section-title">💳 Istorija plaćanja (${relPayments.length}) · Prihodi: <span style="color:var(--accent);font-weight:700">${fmt(totalPaymentsIncome)}</span> · Rashodi: <span style="color:var(--amber);font-weight:700">${fmt(totalPaymentsExpense)}</span></div>
+    <div class="card-section-title">💳 Historija plaćanja (${relPayments.length}) · Prihodi: <span style="color:var(--accent);font-weight:700">${fmt(totalPaymentsIncome)}</span> · Rashodi: <span style="color:var(--amber);font-weight:700">${fmt(totalPaymentsExpense)}</span></div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:4px">
       <thead><tr style="background:var(--surface2)">
         <th style="${thStyle}">Datum</th><th style="${thStyle}">Opis</th><th style="${thStyle}">Kategorija</th><th style="${thStyle}">Tip</th><th style="${thStyle}">Iznos</th>
@@ -1022,7 +1397,11 @@ function renderPayments(){
 function saveEvidence(){
   const ime=document.getElementById('e-ime').value.trim(),prezime=document.getElementById('e-prezime').value.trim();
   if(!ime||!prezime){toast('Ime i prezime su obavezni.','red');return;}
-  const d={ime,prezime,jmbg:document.getElementById('e-jmbg').value.trim(),telefon:document.getElementById('e-telefon').value.trim(),opstina:document.getElementById('e-opstina').value.trim(),ko:document.getElementById('e-ko').value.trim(),parcela:document.getElementById('e-parcela').value.trim(),fotografije:[...tempFiles.fotografije],dwg:[...tempFiles.dwg],elaborat:[...tempFiles.elaborat]};
+  const d={ime,prezime,jmbg:document.getElementById('e-jmbg').value.trim(),telefon:document.getElementById('e-telefon').value.trim(),opstina:document.getElementById('e-opstina').value.trim(),ko:document.getElementById('e-ko').value.trim(),parcela:document.getElementById('e-parcela').value.trim(),
+    imeoca:document.getElementById('e-imeoca').value.trim(),
+    ln:document.getElementById('e-ln').value.trim(),
+    spratnost:document.getElementById('e-spratnost').value,
+    godina:document.getElementById('e-godina').value.trim(),fotografije:[...tempFiles.fotografije],dwg:[...tempFiles.dwg],elaborat:[...tempFiles.elaborat]};
   if(editingId.evidence){const idx=DB.evidence.findIndex(x=>x.id===editingId.evidence);if(idx!==-1)DB.evidence[idx]={...DB.evidence[idx],...d};toast('Zapis izmijenjen.','green');}
   else{DB.evidence.push({id:Date.now(),...d});toast('Zapis dodan.','green');}
   closeModal('modal-evidence');render();autoSave();
@@ -1042,12 +1421,6 @@ function renderEvidence(){
 function renderAtt(rid,field,files){
   if(!files||!files.length)return'<span style="color:var(--text4);font-size:12px">—</span>';
   return`<div class="att-chips">${files.map((f,i)=>`<span class="att-chip" onclick="openAttachment(${rid},'${field}',${i})" title="${f.name}">${fileIcon(f.type)} ${f.name.length>10?f.name.substring(0,8)+'…':f.name}</span>`).join('')}</div>`;
-}
-function openAttachment(rid,field,idx){
-  const rec=DB.evidence.find(e=>e.id===rid);if(!rec)return;
-  const f=rec[field][idx];if(!f||!f.data){toast('Fajl nije dostupan.','red');return;}
-  if(f.type.startsWith('image/')){const w=window.open();w.document.write(`<title>${f.name}</title><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${f.data}" style="max-width:100%;max-height:100vh;object-fit:contain"></body>`);}
-  else{const a=document.createElement('a');a.href=f.data;a.download=f.name;a.click();}
 }
 
 // DELETE
