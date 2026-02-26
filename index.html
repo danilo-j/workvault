@@ -416,6 +416,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline" onclick="exportCSV('evidence')">↓ CSV</button>
           <button class="btn btn-outline" onclick="openImport('evidence')">↑ Uvezi CSV</button>
+          <button class="btn btn-outline" onclick="uploadSveFajlove()" id="btn-upload-files" style="border-color:var(--blue);color:var(--blue)">☁ Upload fajlova</button>
           <button class="btn btn-primary" onclick="openModal('modal-evidence')">＋ Dodaj zapis</button>
         </div>
       </div>
@@ -1956,6 +1957,85 @@ function potvrdi_uvezi() {
 }
 
 
+
+// =========================================================
+// UPLOAD SVIH FAJLOVA NA DRIVE
+// =========================================================
+async function uploadSveFajlove() {
+  // Count files pending upload
+  const pending = [];
+  for (const ev of DB.evidence) {
+    for (const field of ['fotografije', 'dwg', 'elaborat']) {
+      for (const f of ev[field] || []) {
+        if (f.data && !f.driveId) pending.push({ ev, field, f });
+      }
+    }
+  }
+
+  if (!pending.length) {
+    toast('✓ Svi fajlovi su već na Google Driveu!', 'green');
+    return;
+  }
+
+  if (!confirm(`Uploadovati ${pending.length} fajl${pending.length === 1 ? '' : 'ova'} na Google Drive?\n\nOvo može potrajati nekoliko minuta zavisno od veličine fajlova.`)) return;
+
+  const btn = document.getElementById('btn-upload-files');
+  btn.disabled = true;
+  btn.textContent = '☁ Uploadujem...';
+
+  let uspjesno = 0, neuspjesno = 0;
+  for (let i = 0; i < pending.length; i++) {
+    const { ev, f } = pending[i];
+    btn.textContent = `☁ ${i + 1}/${pending.length}...`;
+    showLoading(`Uploadujem ${f.name} (${i+1}/${pending.length})...`);
+    try {
+      const newDriveId = await uploadFileToDrive(f);
+      if (newDriveId) {
+        f.driveId = newDriveId;
+        f.data = null;
+        uspjesno++;
+      }
+    } catch (err) {
+      console.warn('Upload failed:', f.name, err.message);
+      neuspjesno++;
+    }
+  }
+
+  hideLoading();
+  btn.disabled = false;
+  updateUploadBtn();
+  await saveToDrive();
+
+  if (neuspjesno === 0) {
+    toast(`✓ Svih ${uspjesno} fajlova uploadovano na Drive!`, 'green');
+  } else {
+    toast(`Uploadovano ${uspjesno}, neuspješno ${neuspjesno} fajlova.`, 'red');
+  }
+}
+
+function updateUploadBtn() {
+  const btn = document.getElementById('btn-upload-files');
+  if (!btn) return;
+  const pending = DB.evidence.reduce((cnt, ev) => {
+    for (const field of ['fotografije', 'dwg', 'elaborat']) {
+      for (const f of ev[field] || []) {
+        if (f.data && !f.driveId) cnt++;
+      }
+    }
+    return cnt;
+  }, 0);
+  if (pending > 0) {
+    btn.textContent = `☁ Upload fajlova (${pending})`;
+    btn.style.borderColor = 'var(--amber)';
+    btn.style.color = 'var(--amber)';
+  } else {
+    btn.textContent = '☁ Upload fajlova';
+    btn.style.borderColor = 'var(--blue)';
+    btn.style.color = 'var(--blue)';
+  }
+}
+
+
 // CSV
 function exportCSV(type){
   if(!DB[type].length){toast('Nema podataka.','red');return;}
@@ -1976,6 +2056,8 @@ function render(){
   const racunSaldo=getRacunSaldo();
   document.getElementById('badge-racun-saldo').textContent=fmt(racunSaldo);
   document.getElementById('badge-racun-saldo').style.background=racunSaldo<0?'var(--red)':'var(--blue)';
+  // Update upload button badge
+  updateUploadBtn();
 }
 
 // INIT
