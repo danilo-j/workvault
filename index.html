@@ -811,10 +811,8 @@ async function onSignedIn(){
   }catch(e){}
   document.getElementById('app').classList.add('visible');await loadFromDrive();hideLoading();
 }
-function signOut(){if(!confirm('Odjaviti se?'))return;accessToken=null;sessionStorage.removeItem('wv_token');DB={payments:[],jobs:[],evidence:[]};document.getElementById('app').classList.remove('visible');document.getElementById('login-screen').style.display='flex';setDriveStatus('','Nije sinhronizovano');}
+function signOut(){if(!confirm('Odjaviti se?'))return;accessToken=null;sessionStorage.removeItem('wv_token');DB={payments:[],jobs:[],evidence:[],racun:{pocetniSaldo:0,transakcije:[]}};document.getElementById('app').classList.remove('visible');document.getElementById('login-screen').style.display='flex';setDriveStatus('','Nije sinhronizovano');}
 
-// DRIVE
-async 
 // =========================================================
 // DRIVE — FOLDER STRUKTURA + BACKUP + FILE STORAGE
 // =========================================================
@@ -943,7 +941,7 @@ async function pruneBackups(keepCount) {
 }
 
 // --- SAVE / LOAD ---
-async function saveToDrive() {
+async async function saveToDrive() {
   if (!accessToken) { toast('Niste prijavljeni.', 'red'); return; }
   setDriveStatus('syncing', 'Čuvam na Drive...');
   try {
@@ -985,7 +983,7 @@ function stripBase64(db) {
   return clone;
 }
 
-async function loadFromDrive() {
+async async function loadFromDrive() {
   if (!accessToken) return;
   setDriveStatus('syncing', 'Učitavam...');
   try {
