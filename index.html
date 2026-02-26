@@ -967,17 +967,21 @@ async function saveToDrive() {
 let saveCounter = 0;
 
 function stripBase64(db) {
-  // Return DB copy where file data is replaced with driveFileId reference
+  // Only strip base64 data if file has been successfully uploaded to Drive (has driveId)
+  // If no driveId yet, KEEP the base64 as fallback — never lose data
   const clone = JSON.parse(JSON.stringify(db));
   for (const ev of clone.evidence || []) {
     for (const field of ['fotografije', 'dwg', 'elaborat']) {
       if (!ev[field]) continue;
-      ev[field] = ev[field].map(f => ({
-        name: f.name,
-        type: f.type,
-        driveId: f.driveId || null
-        // data (base64) intentionally stripped
-      }));
+      ev[field] = ev[field].map(f => {
+        if (f.driveId) {
+          // Safe to strip — file is confirmed on Drive
+          return { name: f.name, type: f.type, driveId: f.driveId };
+        } else {
+          // No driveId yet — keep base64 as fallback
+          return { name: f.name, type: f.type, driveId: null, data: f.data || null };
+        }
+      });
     }
   }
   return clone;
@@ -1040,9 +1044,12 @@ async function saveEvidenceFiles(evidenceId) {
       if (f.data && !f.driveId) {
         try {
           showLoading('Uploadujem ' + f.name + '...');
-          f.driveId = await uploadFileToDrive(f);
-          f.data = null; // remove base64 after upload
-          changed = true;
+          const newDriveId = await uploadFileToDrive(f);
+          if (newDriveId) {
+            f.driveId = newDriveId;
+            f.data = null; // safe to remove base64 — confirmed on Drive
+            changed = true;
+          }
         } catch (err) {
           console.warn('File upload failed:', f.name, err.message);
         }
