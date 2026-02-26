@@ -240,7 +240,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div class="nav-item active" onclick="showPage('payments')" id="nav-payments"><span class="nav-icon">💳</span>Plaćanja<span class="nav-badge" id="badge-payments">0</span></div>
       <div class="nav-item" onclick="showPage('jobs')" id="nav-jobs"><span class="nav-icon">🔧</span>Poslovi<span class="nav-badge" id="badge-jobs">0</span></div>
       <div class="nav-item" onclick="showPage('racun')" id="nav-racun"><span class="nav-icon">🏦</span>Račun<span class="nav-badge" id="badge-racun-saldo" style="background:var(--blue)">€0</span></div>
-      <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence"><span class="nav-icon">📋</span>Evidencija<span class="nav-badge" id="badge-evidence">0</span></div>
+      <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence"><span class="nav-icon">📋</span>Elaborati/Legalizacija<span class="nav-badge" id="badge-evidence">0</span></div>
       <div class="nav-item" onclick="showPage('reports')" id="nav-reports"><span class="nav-icon">📊</span>Izvještaji</div>
     </div>
     <div class="drive-status"><div class="drive-dot" id="drive-dot"></div><span id="drive-status-text">Nije sinhronizovano</span></div>
@@ -950,7 +950,7 @@ function showCard(id){
     </table>`:''}
 
     ${relPayments.length?`
-    <div class="card-section-title">💳 Historija plaćanja (${relPayments.length}) · Prihodi: <span style="color:var(--accent);font-weight:700">${fmt(totalPaymentsIncome)}</span> · Rashodi: <span style="color:var(--amber);font-weight:700">${fmt(totalPaymentsExpense)}</span></div>
+    <div class="card-section-title">💳 Istorija plaćanja (${relPayments.length}) · Prihodi: <span style="color:var(--accent);font-weight:700">${fmt(totalPaymentsIncome)}</span> · Rashodi: <span style="color:var(--amber);font-weight:700">${fmt(totalPaymentsExpense)}</span></div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:4px">
       <thead><tr style="background:var(--surface2)">
         <th style="${thStyle}">Datum</th><th style="${thStyle}">Opis</th><th style="${thStyle}">Kategorija</th><th style="${thStyle}">Tip</th><th style="${thStyle}">Iznos</th>
