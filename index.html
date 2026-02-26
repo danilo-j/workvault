@@ -941,7 +941,7 @@ async function pruneBackups(keepCount) {
 }
 
 // --- SAVE / LOAD ---
-async async function saveToDrive() {
+async function saveToDrive() {
   if (!accessToken) { toast('Niste prijavljeni.', 'red'); return; }
   setDriveStatus('syncing', 'Čuvam na Drive...');
   try {
@@ -983,7 +983,7 @@ function stripBase64(db) {
   return clone;
 }
 
-async async function loadFromDrive() {
+async function loadFromDrive() {
   if (!accessToken) return;
   setDriveStatus('syncing', 'Učitavam...');
   try {
