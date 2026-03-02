@@ -2513,17 +2513,37 @@ function getBookmarklet() {
   // Build bookmarklet with pre-filled values
 
   const bm = `javascript:(async function(){
-    var koId='${koId}';
     var koNaziv='${ko.replace(/'/g,"\\'")}';
     var parcelaBr='${parcela}';
     var lnBr='${ln}';
-    if(!document.getElementById('katastarskaOpstinaId')){alert('Otvorite stranicu za pretragu katastra nepokretnosti na eKatastar.');return;}
     try{
-      var vl=jQuery('#dgVlasnici').datagrid('getData');
-      var parc=jQuery('#dgDeloviParcela').datagrid('getData');
-      var obj=jQuery('#dgObjekti').datagrid('getData');
-      if(!vl||!vl.rows||vl.rows.length===0){alert('Nema podataka. Izvršite pretragu KP '+parcelaBr+' u KO '+koNaziv+', pa ponovo kliknite bookmarklet.');return;}
-      var payload={ko:koNaziv,ln:document.getElementById('posjedovniList')?.value||lnBr,
+      // Podaci su u iframe-u - trazimo iframe sa eKatastar pretragom
+      var $ = window.jQuery || window.$;
+      var iframeDoc = null;
+      var frames = document.querySelectorAll('iframe');
+      for(var i=0;i<frames.length;i++){
+        try{
+          var fd = frames[i].contentDocument || frames[i].contentWindow.document;
+          if(fd && fd.getElementById('dgVlasnici')){iframeDoc=fd;break;}
+        }catch(e){}
+      }
+      // Ako nema iframe, probaj direktno na trenutnoj stranici
+      var ctx = iframeDoc || document;
+      var ctxJQ = iframeDoc ? (frames[0].contentWindow.jQuery || frames[0].contentWindow.$) : $;
+      if(!ctxJQ || !ctx.getElementById('dgVlasnici')){
+        alert('Nema podataka. Molimo:\\n1. Prijavite se na eKatastar\\n2. Idite na Pretraga po broju → Pretraga katastra nepokretnosti\\n3. Odaberite KO i pretražite KP '+parcelaBr+'\\n4. Sačekajte da se podaci učitaju\\n5. Ponovo kliknite bookmark');
+        return;
+      }
+      var vl=ctxJQ('#dgVlasnici').datagrid('getData');
+      var parc=ctxJQ('#dgDeloviParcela').datagrid('getData');
+      var obj=ctxJQ('#dgObjekti').datagrid('getData');
+      if(!vl||!vl.rows||vl.rows.length===0){
+        alert('Nema učitanih podataka o parcelama. Izvršite pretragu KP '+parcelaBr+' u KO '+koNaziv+' i sačekajte da se tabele popune, pa ponovo kliknite bookmark.');
+        return;
+      }
+      var koIzStranice = (ctx.getElementById('nazivKatastarskeOpstine')||{}).value || koNaziv;
+      var lnIzStranice = (ctx.getElementById('posjedovniList')||{}).value || lnBr;
+      var payload={ko:koIzStranice||koNaziv,ln:lnIzStranice||lnBr,
         vlasnici:vl.rows.map(function(r){return{imePrezime:r.imePrezime||'',jmbg:r.jmbg||'',udeo:r.udeo||'',vrstaPrava:r.vrstaPrava||''};}),
         parcele:parc.rows.map(function(r){return{broj:r.broj||'',podbroj:r.podbroj||'',redniBroj:r.redniBroj||'',potes:r.potes||'',povrsina:r.povrsina||'',nacinKoriscenja:r.nacinKoriscenja||'',osnov:r.osnov||''};}),
         objekti:obj.rows.map(function(r){return{broj:r.broj||'',redniBroj:r.redniBroj||'',pd:r.pd||'',nacinKoriscenja:r.nacinKoriscenja||'',povrsina:r.povrsina||'',sprat:r.sprat||'',spratnost:r.spratnost||'',osnov:r.osnov||''};})
