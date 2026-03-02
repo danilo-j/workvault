@@ -789,7 +789,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 </div>
 
 
-<!-- MODAL: eKATASTAR -->
+<!-- MODAL: eKATASTAR — sa lokalnim serverom -->
 <div class="modal-overlay" id="modal-ekatastar">
   <div class="modal wide">
     <div class="modal-header">
@@ -798,6 +798,13 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     </div>
 
     <div id="ekatastar-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)"></div>
+
+    <!-- Status lokalnog servera -->
+    <div id="ek-server-bar" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface2)">
+      <div id="ek-server-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text4);flex-shrink:0;transition:background .3s"></div>
+      <span id="ek-server-label">Provjeravam lokalni server...</span>
+      <button class="btn btn-outline btn-sm" onclick="ekCheckServer()" style="margin-left:auto;font-size:11px">↻ Provjeri</button>
+    </div>
 
     <div class="form-grid">
       <div class="form-group">
@@ -814,21 +821,45 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       </div>
     </div>
 
-    <div style="background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:14px 16px;margin-top:4px;font-size:13px;line-height:2">
-      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#7a6000;margin-bottom:6px">📋 Kako preuzeti podatke</div>
-      <div style="color:#5a4000">
-        <b>1.</b> Kliknite <strong>"Kopiraj bookmarklet"</strong> ispod<br>
-        <b>2.</b> Otvorite <a href="https://www.ekatastar.me/ekatastar-web/action/elogin" target="_blank" style="color:#BB0009">ekatastar.me</a> → Prijavite se → Pretraga katastra nepokretnosti<br>
-        <b>3.</b> Odaberite KO i pretražite po broju parcele ili LN<br>
-        <b>4.</b> Kada se podaci učitaju, zalijepite bookmarklet u adresnu traku i pritisnite Enter<br>
-        <b>5.</b> WorkVault se otvara sa preuzetim podacima → kliknite <strong>"Generiši Spisak prijava"</strong>
+    <!-- Panel A: server aktivan i konfigurisan -->
+    <div id="ek-panel-server" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2e7d32;margin-bottom:5px">✓ Lokalni server aktivan</div>
+      <div style="color:#1b5e20;line-height:1.7">
+        Kliknite <strong>"Preuzmi automatski"</strong> — Python script se sam prijavljuje i preuzima podatke.<br>
+        <span id="ek-server-user" style="color:#388e3c;font-size:12px;font-style:italic"></span>
+      </div>
+    </div>
+
+    <!-- Panel B: server aktivan, treba credentials -->
+    <div id="ek-panel-setup" style="display:none;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b71c1c;margin-bottom:8px">⚙ Server aktivan — postavi eKatastar kredencijale</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <input type="text"     id="ek-setup-user" placeholder="eKatastar email"    style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+        <input type="password" id="ek-setup-pass" placeholder="Lozinka"           style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="ekSaveSetup()">💾 Sačuvaj kredencijale</button>
+      <div style="font-size:11px;color:#c62828;margin-top:6px">Sačuvat će se lokalno u ~/.ekatastar_creds.json</div>
+    </div>
+
+    <!-- Panel C: server nije pokrenut — fallback bookmarklet -->
+    <div id="ek-panel-bookmarklet" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;line-height:2">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#7a6000;margin-bottom:5px">🔌 Lokalni server nije pokrenut</div>
+      <div style="color:#5a4000;font-size:12px">
+        <b>Opcija 1 — Automatski (preporučeno):</b><br>
+        &nbsp;&nbsp;<code style="background:#fff;padding:2px 7px;border-radius:4px;font-family:monospace">python ekatastar.py --server</code><br>
+        &nbsp;&nbsp;Zatim se vratite ovdje i kliknite "↻ Provjeri"<br><br>
+        <b>Opcija 2 — Ručno (bookmarklet):</b><br>
+        &nbsp;&nbsp;1. Kliknite "📋 Bookmarklet" → kopirajte kod<br>
+        &nbsp;&nbsp;2. Prijavite se na <a href="https://www.ekatastar.me/ekatastar-web/action/elogin" target="_blank" style="color:#BB0009">ekatastar.me</a> → pretražite parcelu<br>
+        &nbsp;&nbsp;3. Zalijepite bookmarklet u adresnu traku → Enter
       </div>
     </div>
 
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar')">Zatvori</button>
-      <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 Otvori eKatastar</button>
-      <button class="btn btn-primary" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Kopiraj bookmarklet</button>
+      <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 eKatastar</button>
+      <button class="btn btn-outline" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Bookmarklet</button>
+      <button class="btn btn-primary" id="btn-ek-fetch" onclick="ekFetchData()" disabled>⬇ Preuzmi automatski</button>
     </div>
   </div>
 </div>
@@ -2772,6 +2803,149 @@ window.addEventListener('load',()=>{
     else{hideLoading();document.getElementById('login-screen').style.display='flex';}
   });
 });
+
+// =============================================================================
+// eKatastar Lokalni Server Integracija
+// WorkVault automatski detektuje ekatastar.py --server na localhost:5731
+// =============================================================================
+
+const EK_SERVER = 'http://localhost:5731';
+let ekServerAvailable  = false;
+let ekServerConfigured = false;
+
+async function ekCheckServer() {
+  const dot    = document.getElementById('ek-server-dot');
+  const label  = document.getElementById('ek-server-label');
+  const pA     = document.getElementById('ek-panel-server');
+  const pB     = document.getElementById('ek-panel-setup');
+  const pC     = document.getElementById('ek-panel-bookmarklet');
+  const btnF   = document.getElementById('btn-ek-fetch');
+
+  dot.style.background   = 'var(--amber)';
+  label.textContent      = 'Provjeravam...';
+  [pA, pB, pC].forEach(p => { if(p) p.style.display = 'none'; });
+  if(btnF) btnF.disabled = true;
+
+  try {
+    const r = await fetch(EK_SERVER + '/status', {
+      signal: AbortSignal.timeout(2500)
+    });
+    if (!r.ok) throw new Error('not ok');
+    const s = await r.json();
+
+    ekServerAvailable  = true;
+    ekServerConfigured = s.configured;
+
+    if (s.configured) {
+      dot.style.background  = '#43a047';
+      label.textContent     = 'Lokalni server aktivan  ·  ' + s.username;
+      if (pA) pA.style.display = 'block';
+      if (btnF) btnF.disabled  = false;
+      const su = document.getElementById('ek-server-user');
+      if (su) su.textContent = 'Prijavljen kao: ' + s.username;
+    } else {
+      dot.style.background  = 'var(--amber)';
+      label.textContent     = 'Server aktivan — potrebni kredencijali';
+      if (pB) pB.style.display = 'block';
+    }
+  } catch (e) {
+    ekServerAvailable  = false;
+    ekServerConfigured = false;
+    dot.style.background  = 'var(--text4)';
+    label.textContent     = 'Lokalni server nije pokrenut';
+    if (pC) pC.style.display = 'block';
+  }
+}
+
+async function ekSaveSetup() {
+  const u = (document.getElementById('ek-setup-user') || {}).value || '';
+  const p = (document.getElementById('ek-setup-pass') || {}).value || '';
+  if (!u.trim() || !p.trim()) { toast('Unesite email i lozinku', 'red'); return; }
+  try {
+    const r = await fetch(EK_SERVER + '/setup', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ username: u.trim(), password: p.trim() }),
+      signal:  AbortSignal.timeout(5000)
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast('✓ Kredencijali sačuvani!', 'green');
+      ekCheckServer();
+    } else {
+      toast('Greška: ' + (d.error || '?'), 'red');
+    }
+  } catch(e) {
+    toast('Server nije dostupan: ' + e.message, 'red');
+  }
+}
+
+async function ekFetchData() {
+  const ko      = (document.getElementById('ek-ko')      || {}).value || '';
+  const parcela = (document.getElementById('ek-parcela') || {}).value || '';
+  const ln      = (document.getElementById('ek-ln')      || {}).value || '';
+
+  if (!ko.trim())                    { toast('Unesite naziv KO', 'red');              return; }
+  if (!parcela.trim() && !ln.trim()) { toast('Unesite broj parcele ili LN', 'red');   return; }
+  if (!ekServerAvailable)            { toast('Lokalni server nije pokrenut', 'red');  return; }
+  if (!ekServerConfigured)           { toast('Postavi kredencijale prvo', 'red');     return; }
+
+  const btn = document.getElementById('btn-ek-fetch');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Preuzimam...'; }
+  showLoading('Preuzimam podatke sa eKatastra...');
+
+  try {
+    const r = await fetch(EK_SERVER + '/fetch', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        ko:       ko.trim(),
+        parcela:  parcela.trim(),
+        ln:       ln.trim(),
+        headless: true
+      }),
+      signal: AbortSignal.timeout(180000)  // 3 minute timeout
+    });
+    const d = await r.json();
+    hideLoading();
+    if (d.ok && d.data) {
+      closeModal('modal-ekatastar');
+      importEKatastarData(d.data);
+    } else {
+      toast('Greška: ' + (d.error || 'Nepoznata greška'), 'red');
+    }
+  } catch(e) {
+    hideLoading();
+    const msg = e.name === 'TimeoutError'
+      ? 'Timeout (>3min). Provjerite browser i eKatastar stranicu.'
+      : e.message;
+    toast('Greška: ' + msg, 'red');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⬇ Preuzmi automatski'; }
+  }
+}
+
+// Auto-provjera kada se modal otvori
+(function() {
+  function patchModal() {
+    const overlay = document.getElementById('modal-ekatastar');
+    if (!overlay) { setTimeout(patchModal, 300); return; }
+    new MutationObserver(function(muts) {
+      for (var m of muts) {
+        if (m.attributeName === 'class' && overlay.classList.contains('open')) {
+          ekCheckServer();
+          break;
+        }
+      }
+    }).observe(overlay, { attributes: true });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', patchModal);
+  } else {
+    patchModal();
+  }
+})();
+
 </script>
 </body>
 </html>
