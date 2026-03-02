@@ -806,7 +806,36 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <button class="btn btn-outline btn-sm" onclick="ekCheckServer()" style="margin-left:auto;font-size:11px">↻ Provjeri</button>
     </div>
 
-    <div class="form-grid">
+    <div class="form-grid form-grid-2">
+      <div class="form-group">
+        <label>Opština (Područna jedinica)</label>
+        <select id="ek-opstina">
+          <option value="">— odaberite opštinu —</option>
+          <option value="Andrijevica">Andrijevica</option>
+          <option value="Bar">Bar</option>
+          <option value="Berane">Berane</option>
+          <option value="Bijelo Polje">Bijelo Polje</option>
+          <option value="Budva">Budva</option>
+          <option value="Cetinje">Cetinje</option>
+          <option value="Danilovgrad">Danilovgrad</option>
+          <option value="Gusinje">Gusinje</option>
+          <option value="Herceg Novi">Herceg Novi</option>
+          <option value="Kolašin">Kolašin</option>
+          <option value="Kotor">Kotor</option>
+          <option value="Mojkovac">Mojkovac</option>
+          <option value="Nikšić">Nikšić</option>
+          <option value="Petnjica">Petnjica</option>
+          <option value="Plav">Plav</option>
+          <option value="Pljevlja">Pljevlja</option>
+          <option value="Plužine">Plužine</option>
+          <option value="Podgorica">Podgorica</option>
+          <option value="Rožaje">Rožaje</option>
+          <option value="Šavnik">Šavnik</option>
+          <option value="Tivat">Tivat</option>
+          <option value="Ulcinj">Ulcinj</option>
+          <option value="Žabljak">Žabljak</option>
+        </select>
+      </div>
       <div class="form-group">
         <label>KO (Katastarska opština)</label>
         <input type="text" id="ek-ko" placeholder="npr. Crnča - Laholo">
@@ -2527,10 +2556,11 @@ function openEKatastar(evId) {
     `LN: <strong>${ev.ln||'—'}</strong> &nbsp;·&nbsp; ` +
     `KO: <strong>${ev.ko||'—'}</strong>`;
 
-  // Pre-fill fields
+  // Pre-fill fields iz evidencije
+  document.getElementById('ek-opstina').value = ev.opstina || '';
   document.getElementById('ek-parcela').value = ev.parcela || '';
-  document.getElementById('ek-ln').value = ev.ln || '';
-  document.getElementById('ek-ko').value = ev.ko || '';
+  document.getElementById('ek-ln').value      = ev.ln      || '';
+  document.getElementById('ek-ko').value      = ev.ko      || '';
 
   document.getElementById('modal-ekatastar').classList.add('open');
 }
@@ -2882,10 +2912,12 @@ async function ekSaveSetup() {
 
 async function ekFetchData() {
   const ko      = (document.getElementById('ek-ko')      || {}).value || '';
+  const opstina = (document.getElementById('ek-opstina') || {}).value || '';
   const parcela = (document.getElementById('ek-parcela') || {}).value || '';
   const ln      = (document.getElementById('ek-ln')      || {}).value || '';
 
   if (!ko.trim())                    { toast('Unesite naziv KO', 'red');              return; }
+  if (!opstina.trim())               { toast('Unesite naziv opštine', 'red');         return; }
   if (!parcela.trim() && !ln.trim()) { toast('Unesite broj parcele ili LN', 'red');   return; }
   if (!ekServerAvailable)            { toast('Lokalni server nije pokrenut', 'red');  return; }
   if (!ekServerConfigured)           { toast('Postavi kredencijale prvo', 'red');     return; }
@@ -2900,6 +2932,7 @@ async function ekFetchData() {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
         ko:       ko.trim(),
+        opstina:  opstina.trim(),
         parcela:  parcela.trim(),
         ln:       ln.trim(),
         headless: true
