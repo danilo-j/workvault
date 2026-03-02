@@ -788,6 +788,92 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
   </div>
 </div>
 
+
+<!-- MODAL: eKATASTAR -->
+<div class="modal-overlay" id="modal-ekatastar">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">🏛 eKatastar — preuzmi podatke o parceli</div>
+      <button class="modal-close" onclick="closeModal('modal-ekatastar')">✕</button>
+    </div>
+
+    <div id="ekatastar-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)"></div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>KO (Katastarska opština)</label>
+        <input type="text" id="ek-ko" placeholder="npr. Crnča - Laholo">
+      </div>
+      <div class="form-group">
+        <label>Broj parcele</label>
+        <input type="text" id="ek-parcela" placeholder="npr. 503">
+      </div>
+      <div class="form-group">
+        <label>LN (List nepokretnosti)</label>
+        <input type="text" id="ek-ln" placeholder="npr. 169">
+      </div>
+    </div>
+
+    <div style="background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:14px 16px;margin-top:4px;font-size:13px;line-height:2">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#7a6000;margin-bottom:6px">📋 Kako preuzeti podatke</div>
+      <div style="color:#5a4000">
+        <b>1.</b> Kliknite <strong>"Kopiraj bookmarklet"</strong> ispod<br>
+        <b>2.</b> Otvorite <a href="https://www.ekatastar.me/ekatastar-web/action/elogin" target="_blank" style="color:#BB0009">ekatastar.me</a> → Prijavite se → Pretraga katastra nepokretnosti<br>
+        <b>3.</b> Odaberite KO i pretražite po broju parcele ili LN<br>
+        <b>4.</b> Kada se podaci učitaju, zalijepite bookmarklet u adresnu traku i pritisnite Enter<br>
+        <b>5.</b> WorkVault se otvara sa preuzetim podacima → kliknite <strong>"Generiši Spisak prijava"</strong>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-ekatastar')">Zatvori</button>
+      <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 Otvori eKatastar</button>
+      <button class="btn btn-primary" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Kopiraj bookmarklet</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: eKATASTAR IMPORT -->
+<div class="modal-overlay" id="modal-ekatastar-import">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">🏛 Uvoz podataka sa eKatastra</div>
+      <button class="modal-close" onclick="closeModal('modal-ekatastar-import')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Preuzeti su sledeći podaci:</div>
+    <div style="background:var(--surface2);border-radius:10px;padding:14px 16px;font-size:13px;line-height:2;border:1px solid var(--border)">
+      <div><b>KO:</b> <span id="ek-import-ko"></span></div>
+      <div><b>LN:</b> <span id="ek-import-ln"></span></div>
+      <div><b>Nosioci prava:</b> <span id="ek-import-vlasnici"></span></div>
+      <div><b>Parcele:</b> <span id="ek-import-parcele"></span></div>
+      <div><b>Objekti:</b> <span id="ek-import-objekti"></span></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-ekatastar-import')">Otkaži</button>
+      <button class="btn btn-primary" onclick="downloadSpisak()">⬇ Generiši Spisak prijava (.xlsx)</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: UPLOAD SPISAK TEMPLATE -->
+<div class="modal-overlay" id="modal-spisak-upload">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📎 Učitaj template Spiska prijava</div>
+      <button class="modal-close" onclick="document.getElementById('modal-spisak-upload').classList.remove('open')">✕</button>
+    </div>
+    <div class="import-info">Učitajte <strong>Spisak_prijava.xlsx</strong> template jednom — biće sačuvan i koristiti za sve buduće generacije.</div>
+    <div class="import-zone" onclick="document.getElementById('spisak-file-input').click()" style="margin:16px 0">
+      <div style="font-size:28px;margin-bottom:8px">📄</div>
+      <div>Kliknite da odaberete <strong>Spisak_prijava.xlsx</strong></div>
+      <input type="file" id="spisak-file-input" accept=".xlsx" style="display:none" onchange="handleSpisakUpload(this)">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('modal-spisak-upload').classList.remove('open')">Otkaži</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- MODAL IMPORT -->
@@ -900,7 +986,7 @@ async function onSignedIn(){
     document.getElementById('user-name').textContent=info.name||info.email||'Korisnik';
     const av=document.getElementById('user-avatar');if(info.picture)av.innerHTML=`<img src="${info.picture}" alt="">`;else av.textContent=(info.name||'K')[0].toUpperCase();
   }catch(e){}
-  document.getElementById('app').classList.add('visible');await loadFromDrive();hideLoading();
+  document.getElementById('app').classList.add('visible');await loadFromDrive();hideLoading();setTimeout(checkEKatastarHash, 500);
 }
 function signOut(){if(!confirm('Odjaviti se?'))return;accessToken=null;sessionStorage.removeItem('wv_token');DB={payments:[],jobs:[],evidence:[],racun:{pocetniSaldo:0,transakcije:[]}};document.getElementById('app').classList.remove('visible');document.getElementById('login-screen').style.display='flex';setDriveStatus('','Nije sinhronizovano');}
 
@@ -1512,7 +1598,7 @@ function renderEvidence(){
   const osel=document.getElementById('filter-e-opstina'),co=osel?.value;
   if(osel){const ops=[...new Set(DB.evidence.map(e=>e.opstina).filter(Boolean))].sort();osel.innerHTML='<option value="">Sve opštine</option>'+ops.map(o=>`<option value="${o}"${o===co?' selected':''}>${o}</option>`).join('');}
   const tbody=document.getElementById('evidence-tbody');
-  tbody.innerHTML=d.length?d.map(e=>`<tr><td>${e.ime}</td><td>${e.prezime}</td><td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td><td>${e.telefon||'—'}</td><td>${e.opstina||'—'}</td><td>${e.ko||'—'}</td><td>${e.parcela||'—'}</td><td>${renderAtt(e.id,'fotografije',e.fotografije)}</td><td>${renderAtt(e.id,'dwg',e.dwg)}</td><td>${renderAtt(e.id,'elaborat',e.elaborat)}</td><td><div class="td-actions"><button class="btn-card" onclick="showCard(${e.id})">Kartica</button><button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button><button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
+  tbody.innerHTML=d.length?d.map(e=>`<tr><td>${e.ime}</td><td>${e.prezime}</td><td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td><td>${e.telefon||'—'}</td><td>${e.opstina||'—'}</td><td>${e.ko||'—'}</td><td>${e.parcela||'—'}</td><td>${renderAtt(e.id,'fotografije',e.fotografije)}</td><td>${renderAtt(e.id,'dwg',e.dwg)}</td><td>${renderAtt(e.id,'elaborat',e.elaborat)}</td><td><div class="td-actions"><button class="btn-card" onclick="showCard(${e.id})">Kartica</button><button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button><button class="btn-card" onclick="openEKatastar(${e.id})" style="color:#BB0009;border-color:#BB0009">🏛 eKatastar</button><button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
 }
 function renderAtt(rid,field,files){
   if(!files||!files.length)return'<span style="color:var(--text4);font-size:12px">—</span>';
@@ -2373,6 +2459,262 @@ async function fillAndDownloadElaborat(templateB64, ev, broj, datum, vrsta, opis
   URL.revokeObjectURL(url);
   closeModal('modal-elaborat');
   toast('✓ Elaborat preuzet!', 'green');
+}
+
+
+
+// =========================================================
+// eKATASTAR INTEGRACIJA
+// =========================================================
+
+// KO mapa: naziv → ID koji koristi eKatastar accordion
+const EK_KO_MAP = {
+  'Babajići': 2, 'Barice': 3, 'Bijelo Polje': 4, 'Bistrica': 54,
+  'Bliškovo': 5, 'Bojišta': 6, 'Boljanin': 60, 'Cerovo': 7,
+  'Crniš': 56, 'Crnča - Laholo': 8, 'Dobrinje': 11, 'Dubovo': 12,
+  'Femića Krš': 13, 'Godijevo': 14, 'Goduša': 58, 'Grab': 15,
+  'Grančarevo': 16, 'Ivanje': 17, 'Jablanovo': 18, 'Jabučno': 19,
+  'Kanje': 20, 'Kičava': 21, 'Korita': 55, 'Kostenica': 59,
+  'Kovren': 22, 'Kradenik': 23, 'Kukulje': 24, 'Lekovina': 25,
+  'Lijeska': 26, 'Lješnica': 27, 'Lozna': 52, 'Majstorovina': 28,
+  'Milovo': 29, 'Mioče': 30, 'Mojstir': 53, 'Muslići': 31,
+  'Negobratina': 32, 'Orahovica': 34, 'Pali': 35, 'Pape': 36,
+  'Pavino Polje': 37, 'Pećarska': 57, 'Poda': 38, 'Potrk': 39,
+  'Prijelozi': 40, 'Radulići': 41, 'Ravna Rijeka': 43, 'Sipanje': 44,
+  'Sokolac': 45, 'Srednje Brdo': 51, 'Stožer': 46, 'Tomaševo': 47,
+  'Ujniče': 48, 'Zaton': 49, 'Čeoče': 9, 'Čokrlije': 10
+};
+
+function openEKatastar(evId) {
+  const ev = DB.evidence.find(e => e.id === evId);
+  if (!ev) return;
+
+  // Show info
+  document.getElementById('ekatastar-stranka-info').innerHTML =
+    `<strong>${ev.prezime} ${ev.ime}</strong> &nbsp;·&nbsp; ` +
+    `KP: <strong>${ev.parcela||'—'}</strong> &nbsp;·&nbsp; ` +
+    `LN: <strong>${ev.ln||'—'}</strong> &nbsp;·&nbsp; ` +
+    `KO: <strong>${ev.ko||'—'}</strong>`;
+
+  // Pre-fill fields
+  document.getElementById('ek-parcela').value = ev.parcela || '';
+  document.getElementById('ek-ln').value = ev.ln || '';
+  document.getElementById('ek-ko').value = ev.ko || '';
+
+  document.getElementById('modal-ekatastar').classList.add('open');
+}
+
+function getBookmarklet() {
+  const parcela = document.getElementById('ek-parcela').value.trim();
+  const ln      = document.getElementById('ek-ln').value.trim();
+  const ko      = document.getElementById('ek-ko').value.trim();
+  const koId    = EK_KO_MAP[ko] || '';
+
+  // Build bookmarklet with pre-filled values
+
+  const bm = `javascript:(async function(){
+    var koId='${koId}';
+    var koNaziv='${ko.replace(/'/g,"\\'")}';
+    var parcelaBr='${parcela}';
+    var lnBr='${ln}';
+    if(!document.getElementById('katastarskaOpstinaId')){alert('Otvorite stranicu za pretragu katastra nepokretnosti na eKatastar.');return;}
+    try{
+      var vl=jQuery('#dgVlasnici').datagrid('getData');
+      var parc=jQuery('#dgDeloviParcela').datagrid('getData');
+      var obj=jQuery('#dgObjekti').datagrid('getData');
+      if(!vl||!vl.rows||vl.rows.length===0){alert('Nema podataka. Izvršite pretragu KP '+parcelaBr+' u KO '+koNaziv+', pa ponovo kliknite bookmarklet.');return;}
+      var payload={ko:koNaziv,ln:document.getElementById('posjedovniList')?.value||lnBr,
+        vlasnici:vl.rows.map(function(r){return{imePrezime:r.imePrezime||'',jmbg:r.jmbg||'',udeo:r.udeo||'',vrstaPrava:r.vrstaPrava||''};}),
+        parcele:parc.rows.map(function(r){return{broj:r.broj||'',podbroj:r.podbroj||'',redniBroj:r.redniBroj||'',potes:r.potes||'',povrsina:r.povrsina||'',nacinKoriscenja:r.nacinKoriscenja||'',osnov:r.osnov||''};}),
+        objekti:obj.rows.map(function(r){return{broj:r.broj||'',redniBroj:r.redniBroj||'',pd:r.pd||'',nacinKoriscenja:r.nacinKoriscenja||'',povrsina:r.povrsina||'',sprat:r.sprat||'',spratnost:r.spratnost||'',osnov:r.osnov||''};})
+      };
+      var encoded=encodeURIComponent(JSON.stringify(payload));
+      window.open('https://danilo-j.github.io/workvault/#ekatastar='+encoded,'_blank');
+    }catch(e){alert('Greška: '+e.message);}
+  })();`;
+  return bm;
+}
+
+function kopirajBookmarklet() {
+  const bm = getBookmarklet();
+  navigator.clipboard.writeText(bm).then(() => {
+    toast('✓ Bookmarklet kopiran! Zalijepite u adresnu traku na eKatastar stranici.', 'green');
+    document.getElementById('btn-bookmarklet').textContent = '✓ Kopirano!';
+    setTimeout(() => { document.getElementById('btn-bookmarklet').textContent = '📋 Kopiraj bookmarklet'; }, 3000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = bm;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('✓ Bookmarklet kopiran!', 'green');
+  });
+}
+
+function otvoriEKatastar() {
+  window.open('https://www.ekatastar.me/ekatastar-web/action/elogin', '_blank');
+}
+
+// Handle incoming eKatastar data (when WorkVault opens with #ekatastar=...)
+function checkEKatastarHash() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#ekatastar=')) return;
+  try {
+    const encoded = hash.slice('#ekatastar='.length);
+    const data = JSON.parse(decodeURIComponent(encoded));
+    window.history.replaceState(null, '', window.location.pathname);
+    importEKatastarData(data);
+  } catch(e) {
+    console.error('eKatastar import error:', e);
+  }
+}
+
+function importEKatastarData(data) {
+  // Show import modal with preview
+  document.getElementById('ek-import-ko').textContent   = data.ko || '—';
+  document.getElementById('ek-import-ln').textContent   = data.ln || '—';
+  document.getElementById('ek-import-vlasnici').textContent =
+    (data.vlasnici || []).map(v => `${v.imePrezime} (${v.udeo})`).join(', ') || '—';
+  document.getElementById('ek-import-parcele').innerHTML =
+    (data.parcele || []).map(p =>
+      `${p.broj}${p.podbroj?'/'+p.podbroj:''}: ${p.nacinKoriscenja} ${p.povrsina}m²`
+    ).join('<br>') || '—';
+  document.getElementById('ek-import-objekti').innerHTML =
+    (data.objekti || []).map(o =>
+      `Zgr.${o.redniBroj||''}${o.pd?' PD'+o.pd:''}: ${o.nacinKoriscenja} ${o.povrsina}m² (${o.spratnost||''})`
+    ).join('<br>') || '—';
+
+  window._ekatastarImportData = data;
+  document.getElementById('modal-ekatastar-import').classList.add('open');
+}
+
+async function downloadSpisak() {
+  const data = window._ekatastarImportData;
+  if (!data) return;
+  showLoading('Generišem Spisak prijava...');
+  try {
+    await generateSpisakPrijava(data);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function generateSpisakPrijava(data) {
+  if (!DB.spisakTemplate) {
+    hideLoading();
+    document.getElementById('modal-ekatastar-import').classList.remove('open');
+    document.getElementById('modal-spisak-upload').classList.add('open');
+    window._pendingSpisakData = data;
+    return;
+  }
+  await fillAndDownloadSpisak(DB.spisakTemplate, data);
+}
+
+async function handleSpisakUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    DB.spisakTemplate = e.target.result;
+    autoSave();
+    toast('✓ Template sačuvan!', 'green');
+    document.getElementById('modal-spisak-upload').classList.remove('open');
+    if (window._pendingSpisakData) {
+      showLoading('Generišem Spisak prijava...');
+      await fillAndDownloadSpisak(DB.spisakTemplate, window._pendingSpisakData);
+      hideLoading();
+      window._pendingSpisakData = null;
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+async function fillAndDownloadSpisak(templateB64, data) {
+  const base64 = templateB64.split(',')[1] || templateB64;
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+  const workbook = XLSX.read(bytes, { type: 'array', cellStyles: true });
+
+  const today = new Date();
+  const datumStr = `${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}.`;
+
+  // Fill A List - staro stanje (vlasnici + parcele)
+  const aList = workbook.Sheets['A LIst'];
+  if (aList) {
+    // KO
+    if (aList['J3']) aList['J3'].v = data.ko || '';
+    if (aList['J4']) aList['J4'].v = 'Bijelo Polje';
+
+    // Fill rows starting at row 8 (index from template)
+    const startRow = 8;
+    data.vlasnici.forEach((v, i) => {
+      const r = startRow + i;
+      aList[`A${r}`] = { v: i+1, t: 'n' };
+      aList[`B${r}`] = { v: data.ln || '', t: 's' };
+      aList[`C${r}`] = { v: v.imePrezime || '', t: 's' };
+      if (v.jmbg) {
+        aList[`C${r+1}`] = { v: v.jmbg, t: 's' };
+      }
+      aList[`F${r}`] = { v: v.vrstaPrava || 'svojina', t: 's' };
+      aList[`G${r}`] = { v: v.udeo || '1/1', t: 's' };
+    });
+
+    // Parcele surfaces
+    data.parcele.forEach((p, i) => {
+      const r = startRow + i;
+      aList[`D${r}`] = { v: p.broj || '', t: 's' };
+      aList[`H${r}`] = { v: p.nacinKoriscenja || '', t: 's' };
+      aList[`I${r}`] = { v: parseFloat(p.povrsina) || '', t: 'n' };
+      aList[`J${r}`] = { v: parseFloat(p.povrsina) || '', t: 'n' };
+    });
+
+    // Datum
+    if (aList['A31']) aList['A31'].v = `Bijelo Polje, ${datumStr}`;
+  }
+
+  // Fill V List - objekti (novo stanje)
+  const vList = workbook.Sheets['V List'];
+  if (vList) {
+    if (vList['M1']) vList['M1'].v = data.ko || '';
+    if (vList['M2']) vList['M2'].v = 'Bijelo Polje';
+
+    const startRow = 8;
+    data.vlasnici.forEach((v, i) => {
+      const r = startRow + i;
+      // Novo stanje kolone P-AD
+      vList[`Q${r}`] = { v: data.ln || '', t: 's' };
+      vList[`R${r}`] = { v: v.imePrezime || '', t: 's' };
+      if (v.jmbg) vList[`R${r+1}`] = { v: v.jmbg, t: 's' };
+      vList[`Y${r}`] = { v: v.vrstaPrava || 'svojina', t: 's' };
+      vList[`Z${r}`] = { v: v.udeo || '1/1', t: 's' };
+    });
+
+    data.objekti.forEach((o, i) => {
+      const r = startRow + i;
+      vList[`S${r}`] = { v: o.broj || '', t: 's' };
+      vList[`T${r}`] = { v: o.redniBroj || '', t: 's' };
+      vList[`U${r}`] = { v: o.sprat || '', t: 's' };
+      vList[`V${r}`] = { v: o.pd || '', t: 's' };
+      vList[`AA${r}`] = { v: o.nacinKoriscenja || '', t: 's' };
+      vList[`AB${r}`] = { v: parseFloat(o.povrsina) || '', t: 'n' };
+    });
+  }
+
+  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array', cellStyles: true });
+  const blob  = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href      = url;
+  a.download  = `SpisakPrijava_${data.ko}_LN${data.ln}_${datumStr.replace(/\./g,'')}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('modal-ekatastar-import').classList.remove('open');
+  toast('✓ Spisak prijava preuzet!', 'green');
 }
 
 
