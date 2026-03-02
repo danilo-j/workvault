@@ -8,6 +8,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -694,6 +695,95 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-backups')">Zatvori</button>
       <button class="btn btn-primary" onclick="manualBackup()">💾 Napravi backup sada</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: GENERIŠI ELABORAT -->
+<div class="modal-overlay" id="modal-elaborat">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="modal-title">📄 Generiši elaborat</div>
+      <button class="modal-close" onclick="closeModal('modal-elaborat')">✕</button>
+    </div>
+
+    <!-- Stranka info (read-only prikaz) -->
+    <div id="elaborat-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)"></div>
+
+    <div class="form-grid">
+      <!-- Broj predmeta -->
+      <div class="form-group">
+        <label>Broj predmeta <span style="color:var(--red)">*</span></label>
+        <input type="text" id="elab-broj" placeholder="npr. 59/2/26">
+      </div>
+      <!-- Datum -->
+      <div class="form-group">
+        <label>Datum elaborata <span style="color:var(--red)">*</span></label>
+        <input type="text" id="elab-datum" placeholder="DD.MM.YYYY.">
+      </div>
+      <!-- Vrsta geodetskih radova -->
+      <div class="form-group full">
+        <label>Vrsta geodetskih radova <span style="color:var(--red)">*</span></label>
+        <select id="elab-vrsta" onchange="elaboratVrstaChange()">
+          <option value="Parcelacija">Parcelacija</option>
+          <option value="Preparcelacija">Preparcelacija</option>
+          <option value="Parcelacija po DUP-u">Parcelacija po DUP-u</option>
+          <option value="Ucrtavanje i etažna razrada objekta">Ucrtavanje i etažna razrada objekta</option>
+          <option value="Etažna razrada PD objekta">Etažna razrada PD objekta</option>
+          <option value="Eksproprijacija">Eksproprijacija</option>
+          <option value="Preparcelacija i ucrtavanje i etažna razrada objekta">Preparcelacija i ucrtavanje i etažna razrada objekta</option>
+          <option value="Parcelacija i ucrtavanje i etažna razrada objekta" selected>Parcelacija i ucrtavanje i etažna razrada objekta</option>
+          <option value="custom">— Unesite ručno —</option>
+        </select>
+        <input type="text" id="elab-vrsta-custom" placeholder="Unesite vrstu radova..." style="display:none;margin-top:6px">
+      </div>
+      <!-- Opis objekta -->
+      <div class="form-group">
+        <label>Opis objekta</label>
+        <select id="elab-opis" onchange="elaboratOpisChange()">
+          <option value="stambeni">stambeni</option>
+          <option value="nestambeni">nestambeni</option>
+          <option value="pomoćni">pomoćni</option>
+          <option value="poslovni">poslovni</option>
+          <option value="stambeno - poslovni">stambeno - poslovni</option>
+          <option value="custom">— Unesite ručno —</option>
+        </select>
+        <input type="text" id="elab-opis-custom" placeholder="Unesite opis objekta..." style="display:none;margin-top:6px">
+      </div>
+    </div>
+
+    <!-- Preview zapisnika -->
+    <div style="margin-top:8px">
+      <label style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3)">Pregled teksta zapisnika</label>
+      <div id="elab-preview" style="margin-top:6px;padding:12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.7;min-height:60px;border:1px solid var(--border)"></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-elaborat')">Otkaži</button>
+      <button class="btn btn-primary" onclick="downloadElaborat()">⬇ Preuzmi elaborat (.xlsx)</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: UPLOAD ELABORAT TEMPLATE -->
+<div class="modal-overlay" id="modal-elaborat-upload">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📎 Učitaj template elaborata</div>
+      <button class="modal-close" onclick="document.getElementById('modal-elaborat-upload').classList.remove('open')">✕</button>
+    </div>
+    <div class="import-info">
+      Učitajte <strong>Forma_elaborata.xlsx</strong> template jednom — biće sačuvan u aplikaciji i koristiti se za sve buduće elaborate.
+    </div>
+    <div class="import-zone" onclick="document.getElementById('template-file-input').click()" style="margin:16px 0">
+      <div style="font-size:28px;margin-bottom:8px">📄</div>
+      <div>Kliknite da odaberete <strong>Forma_elaborata.xlsx</strong></div>
+      <input type="file" id="template-file-input" accept=".xlsx" style="display:none" onchange="handleTemplateUpload(this)">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('modal-elaborat-upload').classList.remove('open')">Otkaži</button>
     </div>
   </div>
 </div>
@@ -1422,7 +1512,7 @@ function renderEvidence(){
   const osel=document.getElementById('filter-e-opstina'),co=osel?.value;
   if(osel){const ops=[...new Set(DB.evidence.map(e=>e.opstina).filter(Boolean))].sort();osel.innerHTML='<option value="">Sve opštine</option>'+ops.map(o=>`<option value="${o}"${o===co?' selected':''}>${o}</option>`).join('');}
   const tbody=document.getElementById('evidence-tbody');
-  tbody.innerHTML=d.length?d.map(e=>`<tr><td>${e.ime}</td><td>${e.prezime}</td><td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td><td>${e.telefon||'—'}</td><td>${e.opstina||'—'}</td><td>${e.ko||'—'}</td><td>${e.parcela||'—'}</td><td>${renderAtt(e.id,'fotografije',e.fotografije)}</td><td>${renderAtt(e.id,'dwg',e.dwg)}</td><td>${renderAtt(e.id,'elaborat',e.elaborat)}</td><td><div class="td-actions"><button class="btn-card" onclick="showCard(${e.id})">Kartica</button><button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
+  tbody.innerHTML=d.length?d.map(e=>`<tr><td>${e.ime}</td><td>${e.prezime}</td><td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td><td>${e.telefon||'—'}</td><td>${e.opstina||'—'}</td><td>${e.ko||'—'}</td><td>${e.parcela||'—'}</td><td>${renderAtt(e.id,'fotografije',e.fotografije)}</td><td>${renderAtt(e.id,'dwg',e.dwg)}</td><td>${renderAtt(e.id,'elaborat',e.elaborat)}</td><td><div class="td-actions"><button class="btn-card" onclick="showCard(${e.id})">Kartica</button><button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button><button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
 }
 function renderAtt(rid,field,files){
   if(!files||!files.length)return'<span style="color:var(--text4);font-size:12px">—</span>';
@@ -2033,6 +2123,256 @@ function updateUploadBtn() {
     btn.style.borderColor = 'var(--blue)';
     btn.style.color = 'var(--blue)';
   }
+}
+
+
+
+// =========================================================
+// ELABORAT GENERATOR
+// =========================================================
+let elaboratEvId = null;
+
+function openElaborat(evId) {
+  elaboratEvId = evId;
+  const ev = DB.evidence.find(e => e.id === evId);
+  if (!ev) return;
+
+  // Show stranka info
+  const imeOca = ev.imeoca ? ` (${ev.imeoca})` : '';
+  document.getElementById('elaborat-stranka-info').innerHTML =
+    `<strong>${ev.prezime} ${ev.ime}</strong>${imeOca} &nbsp;·&nbsp; ` +
+    `KP: <strong>${ev.parcela||'—'}</strong> &nbsp;·&nbsp; ` +
+    `LN: <strong>${ev.ln||'—'}</strong> &nbsp;·&nbsp; ` +
+    `KO: <strong>${ev.ko||'—'}</strong> &nbsp;·&nbsp; ` +
+    `Opština: <strong>${ev.opstina||'—'}</strong>` +
+    (ev.godina ? ` &nbsp;·&nbsp; God. izgr.: <strong>${ev.godina}</strong>` : '') +
+    (ev.spratnost ? ` &nbsp;·&nbsp; Spratnost: <strong>${ev.spratnost}</strong>` : '');
+
+  // Pre-fill datum today
+  const d = new Date();
+  const datum = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}.`;
+  document.getElementById('elab-datum').value = datum;
+  document.getElementById('elab-broj').value = '';
+
+  elaboratUpdatePreview();
+  document.getElementById('modal-elaborat').classList.add('open');
+
+  // Watch for changes to update preview
+  ['elab-broj','elab-datum','elab-vrsta','elab-vrsta-custom','elab-opis','elab-opis-custom']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', elaboratUpdatePreview);
+      if (el) el.addEventListener('change', elaboratUpdatePreview);
+    });
+}
+
+function elaboratOpisChange() {
+  const sel = document.getElementById('elab-opis').value;
+  document.getElementById('elab-opis-custom').style.display = sel === 'custom' ? 'block' : 'none';
+  elaboratUpdatePreview();
+}
+
+function elaboratVrstaChange() {
+  const sel = document.getElementById('elab-vrsta').value;
+  document.getElementById('elab-vrsta-custom').style.display = sel === 'custom' ? 'block' : 'none';
+  elaboratUpdatePreview();
+}
+
+function getElabVrsta() {
+  const sel = document.getElementById('elab-vrsta').value;
+  if (sel === 'custom') return document.getElementById('elab-vrsta-custom').value.trim();
+  return sel;
+}
+
+function getElabOpis() {
+  const sel = document.getElementById('elab-opis').value;
+  if (sel === 'custom') return document.getElementById('elab-opis-custom').value.trim();
+  return sel;
+}
+
+function elaboratUpdatePreview() {
+  const ev = DB.evidence.find(e => e.id === elaboratEvId);
+  if (!ev) return;
+  const datum   = document.getElementById('elab-datum').value || 'DD.MM.YYYY.';
+  const vrsta   = getElabVrsta() || '[vrsta radova]';
+  const parcela = ev.parcela || '[KP]';
+  const ko      = ev.ko      || '[KO]';
+  const opstina = ev.opstina || '[Opština]';
+  const godina  = ev.godina  || '';
+  const imeOca  = ev.imeoca  ? `${ev.imeoca} ` : '';
+  const imePrezime = `${ev.prezime || ''} ${imeOca}${ev.ime || ''}`.trim();
+
+  const godinaText = godina
+    ? ` Po kazivanju vlasnika, godina izgradnje objekta je ${godina}.`
+    : '';
+
+  const tekst =
+    `Dana ${datum} godine izvršeno je snimanje parcele za potrebe ${vrsta.toLowerCase()} ` +
+    `na KP ${parcela}, K.O. ${ko}, O. ${opstina}. ` +
+    `Parcela i objekat su u vlasništvu ${imePrezime} u obimu prava svojina 1/1.` +
+    godinaText +
+    ` Parcelacija je izvršena po kazivanju vlasnika i to po ranije postavljenim međašima.`;
+
+  document.getElementById('elab-preview').textContent = tekst;
+}
+
+async function downloadElaborat() {
+  const ev = DB.evidence.find(e => e.id === elaboratEvId);
+  if (!ev) return;
+
+  const broj  = document.getElementById('elab-broj').value.trim();
+  const datum = document.getElementById('elab-datum').value.trim();
+  const vrsta = getElabVrsta();
+  const opis  = getElabOpis();
+
+  if (!broj || !datum || !vrsta) {
+    toast('Unesite broj predmeta, datum i vrstu radova.', 'red');
+    return;
+  }
+
+  showLoading('Generišem elaborat...');
+
+  try {
+    // Fetch template from Drive or use bundled base64
+    const params = new URLSearchParams({
+      evId:    elaboratEvId,
+      broj, datum, vrsta, opis,
+      ime:     ev.ime     || '',
+      prezime: ev.prezime || '',
+      imeoca:  ev.imeoca  || '',
+      jmbg:    ev.jmbg    || '',
+      opstina: ev.opstina || '',
+      ko:      ev.ko      || '',
+      parcela: ev.parcela || '',
+      ln:      ev.ln      || '',
+      godina:  ev.godina  || '',
+    });
+
+    // Since we can't run Python in browser, we use the SheetJS approach
+    // to fill the template client-side
+    await generateElaboratClientSide(ev, broj, datum, vrsta, opis);
+  } catch(err) {
+    toast('Greška: ' + err.message, 'red');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function generateElaboratClientSide(ev, broj, datum, vrsta, opis) {
+  // We need the template file. Try to fetch from Drive first, then fall back.
+  // For now use a known Drive path or prompt user to upload template.
+
+  // Check if template is stored in DB
+  if (!DB.elaboratTemplate) {
+    // Ask user to upload template
+    hideLoading();
+    toast('Učitavam template...', 'green');
+    document.getElementById('modal-elaborat-upload').classList.add('open');
+    return;
+  }
+
+  await fillAndDownloadElaborat(DB.elaboratTemplate, ev, broj, datum, vrsta, opis);
+}
+
+async function handleTemplateUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    DB.elaboratTemplate = e.target.result; // store as base64
+    autoSave();
+    toast('✓ Template sačuvan!', 'green');
+    document.getElementById('modal-elaborat-upload').classList.remove('open');
+    // Re-trigger download
+    const ev = DB.evidence.find(e => e.id === elaboratEvId);
+    if (ev) {
+      const broj  = document.getElementById('elab-broj').value.trim();
+      const datum = document.getElementById('elab-datum').value.trim();
+      const vrsta = getElabVrsta();
+      const opis  = getElabOpis();
+      showLoading('Generišem elaborat...');
+      await fillAndDownloadElaborat(DB.elaboratTemplate, ev, broj, datum, vrsta, opis);
+      hideLoading();
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+async function fillAndDownloadElaborat(templateB64, ev, broj, datum, vrsta, opis) {
+  // Use SheetJS to manipulate the xlsx
+  const base64 = templateB64.split(',')[1] || templateB64;
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+  const workbook = XLSX.read(bytes, { type: 'array', cellStyles: true, bookVBA: true });
+
+  const imeOca     = ev.imeoca ? `${ev.imeoca} ` : '';
+  const imePrezime = `${ev.prezime || ''} ${ev.ime || ''}`.trim();
+  const imePrezimePuno = `${ev.prezime || ''} ${imeOca}${ev.ime || ''}`.trim();
+  const godinaText = ev.godina
+    ? ` Po kazivanju vlasnika, godina izgradnje objekta je ${ev.godina}.`
+    : '';
+
+  const zapisnik =
+    `Dana ${datum} godine izvršeno je snimanje parcele za potrebe ${vrsta.toLowerCase()} ` +
+    `na KP ${ev.parcela||''}, K.O. ${ev.ko||''}, O. ${ev.opstina||''}. ` +
+    `Parcela i objekat su u vlasništvu ${imePrezimePuno} u obimu prava svojina 1/1.` +
+    godinaText +
+    ` Parcelacija je izvršena po kazivanju vlasnika i to po ranije postavljenim međašima.`;
+
+  function setCellValue(ws, addr, val) {
+    if (!ws[addr]) ws[addr] = {};
+    ws[addr].v = val;
+    ws[addr].t = 's';
+    if (ws[addr].f) delete ws[addr].f; // remove formula so value shows
+  }
+
+  // NASLOVNA STRANA
+  const ns = workbook.Sheets['naslovna strana'];
+  if (ns) {
+    setCellValue(ns, 'C3', broj);
+    setCellValue(ns, 'B4', datum);
+    setCellValue(ns, 'B8', ev.opstina || '');
+    setCellValue(ns, 'B13', ev.opstina || '');
+    setCellValue(ns, 'A14', vrsta);
+    setCellValue(ns, 'B17', imePrezime);
+    ns['F19'] = { v: ev.parcela || '', t: 's' };
+    ns['F20'] = { v: ev.ln || '', t: 's' };
+    setCellValue(ns, 'E21', ev.ko || '');
+    setCellValue(ns, 'C22', ev.opstina || '');
+  }
+
+  // IZJAVA O PRIHVATANJU POSLOVA  
+  const ip = workbook.Sheets['izjava o prihvatanju poslova'];
+  if (ip) {
+    setCellValue(ip, 'B10', ev.jmbg || '');
+    setCellValue(ip, 'B11', ev.opstina || '');
+  }
+
+  // ZAPISNIK
+  const zp = workbook.Sheets['zapisnik o izv uvidjaju'];
+  if (zp) setCellValue(zp, 'A22', zapisnik);
+
+  // IZVOD OF - opis objekta
+  const of = workbook.Sheets['Izvod OF'];
+  if (of && of['G8']) {
+    // G8 is "stambeni" in original
+    setCellValue(of, 'G8', opis);
+  }
+
+  // Download
+  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array', cellStyles: true });
+  const blob  = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href      = url;
+  a.download  = `Elaborat_${ev.prezime}_${ev.parcela||'KP'}_${broj.replace('/','_')}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeModal('modal-elaborat');
+  toast('✓ Elaborat preuzet!', 'green');
 }
 
 
