@@ -797,15 +797,18 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <button class="modal-close" onclick="closeModal('modal-ekatastar')">✕</button>
     </div>
 
-    <div id="ekatastar-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)"></div>
+    <!-- Info o stranci -->
+    <div id="ekatastar-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--text2)"></div>
 
-    <!-- Status lokalnog servera -->
+    <!-- Status bara -->
     <div id="ek-server-bar" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface2)">
-      <div id="ek-server-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text4);flex-shrink:0;transition:background .3s"></div>
-      <span id="ek-server-label">Provjeravam lokalni server...</span>
-      <button class="btn btn-outline btn-sm" onclick="ekCheckServer()" style="margin-left:auto;font-size:11px">↻ Provjeri</button>
+      <div id="ek-server-dot" style="width:9px;height:9px;border-radius:50%;background:var(--text4);flex-shrink:0;transition:background .3s"></div>
+      <span id="ek-server-label" style="flex:1">Provjeravam...</span>
+      <button class="btn btn-outline btn-sm" onclick="ekCheckServer()" style="font-size:11px">↻ Provjeri</button>
+      <button class="btn btn-outline btn-sm" id="btn-ek-start" onclick="ekStartServer()" style="font-size:11px;border-color:var(--accent);color:var(--accent);display:none">▶ Pokreni server</button>
     </div>
 
+    <!-- Forma -->
     <div class="form-grid form-grid-2">
       <div class="form-group">
         <label>Opština (Područna jedinica)</label>
@@ -842,7 +845,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       </div>
       <div class="form-group">
         <label>Broj parcele</label>
-        <input type="text" id="ek-parcela" placeholder="npr. 503">
+        <input type="text" id="ek-parcela" placeholder="npr. 503 ili 503/1">
       </div>
       <div class="form-group">
         <label>LN (List nepokretnosti)</label>
@@ -851,43 +854,32 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     </div>
 
     <!-- Panel A: server aktivan i konfigurisan -->
-    <div id="ek-panel-server" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
-      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2e7d32;margin-bottom:5px">✓ Lokalni server aktivan</div>
-      <div style="color:#1b5e20;line-height:1.7">
-        Kliknite <strong>"Preuzmi automatski"</strong> — Python script se sam prijavljuje i preuzima podatke.<br>
-        <span id="ek-server-user" style="color:#388e3c;font-size:12px;font-style:italic"></span>
-      </div>
+    <div id="ek-panel-server" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:12px 16px;font-size:13px;color:#1b5e20">
+      <span style="font-weight:600">✓ Server spreman.</span>
+      Kliknite <strong>"Preuzmi automatski"</strong> — podaci se preuzimaju bez otvaranja browsera.
+      <span id="ek-server-user" style="color:#388e3c;font-size:12px;font-style:italic;display:block;margin-top:3px"></span>
     </div>
 
-    <!-- Panel B: server aktivan, treba credentials -->
-    <div id="ek-panel-setup" style="display:none;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
-      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b71c1c;margin-bottom:8px">⚙ Server aktivan — postavi eKatastar kredencijale</div>
+    <!-- Panel B: treba kredencijale -->
+    <div id="ek-panel-setup" style="display:none;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;padding:14px 16px;font-size:13px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#b71c1c;margin-bottom:10px">⚙ Postavi eKatastar kredencijale</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <input type="text"     id="ek-setup-user" placeholder="eKatastar email"    style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
-        <input type="password" id="ek-setup-pass" placeholder="Lozinka"           style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+        <input type="text"     id="ek-setup-user" placeholder="eKatastar email"  style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+        <input type="password" id="ek-setup-pass" placeholder="Lozinka"          style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
       </div>
-      <button class="btn btn-primary btn-sm" onclick="ekSaveSetup()">💾 Sačuvaj kredencijale</button>
-      <div style="font-size:11px;color:#c62828;margin-top:6px">Sačuvat će se lokalno u ~/.ekatastar_creds.json</div>
+      <button class="btn btn-primary btn-sm" onclick="ekSaveSetup()">💾 Sačuvaj</button>
+      <div style="font-size:11px;color:#c62828;margin-top:6px">Čuva se u ~/.ekatastar_creds.json</div>
     </div>
 
-    <!-- Panel C: server nije pokrenut — fallback bookmarklet -->
-    <div id="ek-panel-bookmarklet" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;line-height:2">
-      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#7a6000;margin-bottom:5px">🔌 Lokalni server nije pokrenut</div>
-      <div style="color:#5a4000;font-size:12px">
-        <b>Opcija 1 — Automatski (preporučeno):</b><br>
-        &nbsp;&nbsp;<code style="background:#fff;padding:2px 7px;border-radius:4px;font-family:monospace">python ekatastar.py --server</code><br>
-        &nbsp;&nbsp;Zatim se vratite ovdje i kliknite "↻ Provjeri"<br><br>
-        <b>Opcija 2 — Ručno (bookmarklet):</b><br>
-        &nbsp;&nbsp;1. Kliknite "📋 Bookmarklet" → kopirajte kod<br>
-        &nbsp;&nbsp;2. Prijavite se na <a href="https://www.ekatastar.me/ekatastar-web/action/elogin" target="_blank" style="color:#BB0009">ekatastar.me</a> → pretražite parcelu<br>
-        &nbsp;&nbsp;3. Zalijepite bookmarklet u adresnu traku → Enter
-      </div>
+    <!-- Panel C: server nije pokrenut -->
+    <div id="ek-panel-bookmarklet" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:12px 16px;font-size:13px;color:#5a4000">
+      <strong>🔌 Server nije aktivan.</strong>
+      Kliknite <strong>"▶ Pokreni server"</strong> iznad ili pokrenite ručno:<br>
+      <code style="background:#fff;padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;margin-top:5px;display:inline-block">python ekatastar.py --server</code>
     </div>
 
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar')">Zatvori</button>
-      <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 eKatastar</button>
-      <button class="btn btn-outline" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Bookmarklet</button>
       <button class="btn btn-primary" id="btn-ek-fetch" onclick="ekFetchData()" disabled>⬇ Preuzmi automatski</button>
     </div>
   </div>
@@ -2671,6 +2663,7 @@ function importEKatastarData(data) {
 
   window._ekatastarImportData = data;
 
+  // Dugme Primijeni — samo kad je modal otvoren iz kartice
   const btn = document.getElementById('btn-primijeni-karticu');
   if (btn) btn.style.display = window._ekatastarEvId ? '' : 'none';
 
@@ -2681,26 +2674,23 @@ function primijeniNaKarticu() {
   const data = window._ekatastarImportData;
   const evId = window._ekatastarEvId;
   if (!data || !evId) return;
-
   const ev = DB.evidence.find(e => e.id === evId);
   if (!ev) return;
 
+  // Popuni samo prazna polja
   const prvi = (data.vlasnici || [])[0] || {};
   if (!ev.jmbg    && prvi.jmbg)     ev.jmbg    = prvi.jmbg;
   if (!ev.ln      && data.ln)       ev.ln      = data.ln;
   if (!ev.ko      && data.ko)       ev.ko      = data.ko;
   if (!ev.opstina && data.opstina)  ev.opstina = data.opstina;
-
-  if (!ev.parcela && (data.parcele || []).length) {
-    const p   = data.parcele[0];
-    const pbr = p.podbroj && p.podbroj !== '0' ? `/${p.podbroj}` : '';
-    ev.parcela = `${p.broj}${pbr}`;
+  if (!ev.parcela && (data.parcele||[]).length) {
+    const p = data.parcele[0];
+    ev.parcela = p.podbroj && p.podbroj !== '0' ? `${p.broj}/${p.podbroj}` : p.broj;
   }
-  if (!ev.spratnost && (data.objekti || []).length)
+  if (!ev.spratnost && (data.objekti||[]).length)
     ev.spratnost = data.objekti[0].spratnost || '';
 
-  autoSave();
-  render();
+  autoSave(); render();
   closeModal('modal-ekatastar-import');
   toast('✓ Kartica popunjena podacima sa eKatastara', 'green');
   showCard(evId);
@@ -2711,7 +2701,6 @@ async function downloadSpisak() {
   if (!data) return;
   showLoading('Generišem Spisak prijava...');
   try {
-    // Ako je server dostupan — koristi openpyxl (100% formatiranje)
     if (ekServerAvailable && ekServerConfigured) {
       await downloadSpisakViaServer(data);
     } else {
@@ -2727,36 +2716,36 @@ async function downloadSpisakViaServer(data) {
     const r = await fetch(EK_SERVER + '/fetch', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        ko:         data.ko      || '',
-        opstina:    data.opstina || '',
-        parcela:    data.parcela_pretrage || '',
-        ln:         data.ln      || '',
-        only_excel: true,   // ne scrape ponovo, koristi data ispod
-        data:       data        // vec scrapeovani podaci
-      }),
+      body: JSON.stringify({ only_excel: true, data: data }),
       signal: AbortSignal.timeout(30000)
     });
     const d = await r.json();
     if (d.excel_b64 && d.excel_name) {
-      // Preuzmi fajl iz base64 — formatiranje 100% sačuvano
-      const bytes   = Uint8Array.from(atob(d.excel_b64), c => c.charCodeAt(0));
-      const blob    = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url     = URL.createObjectURL(blob);
-      const a       = document.createElement('a');
-      a.href        = url;
-      a.download    = d.excel_name;
-      a.click();
+      const bytes = Uint8Array.from(atob(d.excel_b64), c => c.charCodeAt(0));
+      const blob  = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url   = URL.createObjectURL(blob);
+      const a     = document.createElement('a');
+      a.href = url; a.download = d.excel_name; a.click();
       URL.revokeObjectURL(url);
       closeModal('modal-ekatastar-import');
-      toast('✓ Spisak prijava preuzet (openpyxl)!', 'green');
+      toast('✓ Spisak prijava preuzet!', 'green');
     } else {
       throw new Error(d.error || 'Server nije vratio Excel');
     }
   } catch(e) {
-    // Fallback na SheetJS ako server ne odgovori
-    toast('Server nedostupan, koristim SheetJS fallback...', 'amber');
+    toast('Server fallback na SheetJS...', 'amber');
     await generateSpisakPrijava(data);
+  }
+}
+
+async function downloadSpisak() {
+  const data = window._ekatastarImportData;
+  if (!data) return;
+  showLoading('Generišem Spisak prijava...');
+  try {
+    await generateSpisakPrijava(data);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -2914,7 +2903,6 @@ window.addEventListener('load',()=>{
 
 // =============================================================================
 // eKatastar Lokalni Server Integracija
-// WorkVault automatski detektuje ekatastar.py --server na localhost:5731
 // =============================================================================
 
 const EK_SERVER = 'http://localhost:5731';
@@ -2928,16 +2916,16 @@ async function ekCheckServer() {
   const pB     = document.getElementById('ek-panel-setup');
   const pC     = document.getElementById('ek-panel-bookmarklet');
   const btnF   = document.getElementById('btn-ek-fetch');
+  const btnS   = document.getElementById('btn-ek-start');
 
-  dot.style.background   = 'var(--amber)';
-  label.textContent      = 'Provjeravam...';
+  dot.style.background = 'var(--amber)';
+  label.textContent    = 'Provjeravam...';
   [pA, pB, pC].forEach(p => { if(p) p.style.display = 'none'; });
   if(btnF) btnF.disabled = true;
+  if(btnS) btnS.style.display = 'none';
 
   try {
-    const r = await fetch(EK_SERVER + '/status', {
-      signal: AbortSignal.timeout(2500)
-    });
+    const r = await fetch(EK_SERVER + '/status', { signal: AbortSignal.timeout(2500) });
     if (!r.ok) throw new Error('not ok');
     const s = await r.json();
 
@@ -2945,25 +2933,50 @@ async function ekCheckServer() {
     ekServerConfigured = s.configured;
 
     if (s.configured) {
-      dot.style.background  = '#43a047';
-      label.textContent     = 'Lokalni server aktivan  ·  ' + s.username;
+      dot.style.background = '#43a047';
+      label.textContent    = '● Aktivan  ·  ' + s.username;
       if (pA) pA.style.display = 'block';
       if (btnF) btnF.disabled  = false;
       const su = document.getElementById('ek-server-user');
-      if (su) su.textContent = 'Prijavljen kao: ' + s.username;
+      if (su) su.textContent = 'Prijava: ' + s.username;
     } else {
-      dot.style.background  = 'var(--amber)';
-      label.textContent     = 'Server aktivan — potrebni kredencijali';
+      dot.style.background = 'var(--amber)';
+      label.textContent    = '● Server aktivan — potrebni kredencijali';
       if (pB) pB.style.display = 'block';
     }
   } catch (e) {
     ekServerAvailable  = false;
     ekServerConfigured = false;
-    dot.style.background  = 'var(--text4)';
-    label.textContent     = 'Lokalni server nije pokrenut';
+    dot.style.background = '#ef5350';
+    label.textContent    = '● Server nije aktivan';
     if (pC) pC.style.display = 'block';
+    if (btnS) btnS.style.display = '';  // Prikaži dugme Pokreni server
   }
 }
+
+async function ekStartServer() {
+  const btn = document.getElementById('btn-ek-start');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Pokrećem...'; }
+  try {
+    const r = await fetch(EK_SERVER + '/start', {
+      method: 'POST',
+      signal: AbortSignal.timeout(5000)
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast('✓ Server pokrenut!', 'green');
+      setTimeout(ekCheckServer, 2000);
+    } else {
+      toast('Greška: ' + (d.error || '?'), 'red');
+    }
+  } catch(e) {
+    // Server nije mogao odgovoriti na /start — pokušaj direktno pokrenuti
+    toast('Nije moguće automatski pokrenuti server. Pokrenite ručno: python ekatastar.py --server', 'amber');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Pokreni server'; }
+  }
+}
+
 
 async function ekSaveSetup() {
   const u = (document.getElementById('ek-setup-user') || {}).value || '';
