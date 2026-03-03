@@ -205,6 +205,56 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 .tab-btn{padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;color:var(--text3);font-family:var(--sans);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
 .tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── GRID VIEW ─────────────────────────────────────────────────── */
+.ev-view-toggle{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.ev-view-btn{padding:5px 10px;border-radius:5px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text3);transition:all .15s;font-family:var(--sans)}
+.ev-view-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.ev-grid{display:flex;flex-direction:column;gap:14px;padding:16px}
+.client-group{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:box-shadow .2s}
+.client-group:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.client-group-header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.client-group-header:hover{background:var(--bg2)}
+.client-avatar{width:40px;height:40px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px;font-weight:700;flex-shrink:0}
+.client-name{font-weight:700;font-size:14px;color:var(--text)}
+.client-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.client-count{margin-left:auto;background:var(--accent);color:#fff;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700}
+.client-collapse-icon{font-size:12px;color:var(--text4);margin-left:6px;transition:transform .2s}
+.client-group.collapsed .client-collapse-icon{transform:rotate(-90deg)}
+.client-group.collapsed .client-predmeti{display:none}
+.client-predmeti{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;padding:14px}
+.predmet-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;transition:all .18s;position:relative}
+.predmet-card:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(0,0,0,.07);transform:translateY(-1px)}
+.predmet-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.predmet-br{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text4)}
+.predmet-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.predmet-card:hover .predmet-actions{opacity:1}
+.predmet-action-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text2)}
+.predmet-action-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.predmet-parcela{font-size:15px;font-weight:700;color:var(--text);margin-bottom:1px}
+.predmet-ko{font-size:11px;color:var(--text3);margin-bottom:8px}
+.predmet-fields{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.predmet-field{background:var(--surface2);border-radius:6px;padding:5px 8px}
+.predmet-field-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text4);margin-bottom:1px}
+.predmet-field-value{font-size:11px;font-weight:600;color:var(--text2)}
+.predmet-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.predmet-status{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.ps-active{background:#e8f5e9;color:#2e7d32}
+.ps-pending{background:#fff8e1;color:#7a6000}
+.ps-completed{background:#e3f2fd;color:#1565c0}
+.ps-archived{background:#f5f5f5;color:#616161}
+.predmet-rok{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:3px}
+.predmet-rok.rok-blizu{color:#c62828;font-weight:600}
+.predmet-atts{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.predmet-att{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--blue-light);color:var(--blue);border:1px solid rgba(29,78,216,.12);cursor:pointer;font-weight:500}
+.predmet-att:hover{background:#bfdbfe}
+.status-filter-row{display:flex;gap:5px;flex-wrap:wrap}
+.sf-chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .15s;font-family:var(--sans)}
+.sf-chip.active{border-color:var(--accent);background:var(--accent);color:#fff}
+.sf-chip[data-s="active"].active{background:#2e7d32;border-color:#2e7d32}
+.sf-chip[data-s="pending"].active{background:#856404;border-color:#856404}
+.sf-chip[data-s="completed"].active{background:#1565c0;border-color:#1565c0}
+.sf-chip[data-s="archived"].active{background:#616161;border-color:#616161}
 </style>
 </head>
 <body>
@@ -422,19 +472,40 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         </div>
       </div>
       <div class="table-wrap">
-        <div class="table-toolbar">
-          <span class="table-toolbar-title">Svi zapisi evidencije</span>
-          <input class="search-input" placeholder="🔍 Ime, JMBG, parcela..." oninput="renderEvidence()" id="search-evidence">
+        <div class="table-toolbar" style="flex-wrap:wrap;gap:10px">
+          <span class="table-toolbar-title">Evidencija predmeta</span>
+          <input class="search-input" placeholder="🔍 Ime, JMBG, parcela, predmet..." oninput="renderEvidence()" id="search-evidence">
           <select class="filter-select" onchange="renderEvidence()" id="filter-e-opstina"><option value="">Sve opštine</option></select>
+          <div class="status-filter-row" id="status-filter-row">
+            <button class="sf-chip active" data-s="" onclick="setStatusFilter(this,'')">Sve</button>
+            <button class="sf-chip" data-s="active" onclick="setStatusFilter(this,'active')">🟢 U toku</button>
+            <button class="sf-chip" data-s="pending" onclick="setStatusFilter(this,'pending')">🟡 Na čekanju</button>
+            <button class="sf-chip" data-s="completed" onclick="setStatusFilter(this,'completed')">🔵 Završen</button>
+            <button class="sf-chip" data-s="archived" onclick="setStatusFilter(this,'archived')">⚫ Arhiva</button>
+          </div>
+          <div class="ev-view-toggle" style="margin-left:auto">
+            <button class="ev-view-btn" id="btn-view-grid" onclick="setEvidenceView('grid')">⊞ Grid</button>
+            <button class="ev-view-btn active" id="btn-view-table" onclick="setEvidenceView('table')">☰ Tabela</button>
+          </div>
         </div>
-        <div class="tbl-outer"><table>
+
+        <!-- GRID VIEW -->
+        <div id="evidence-grid" class="ev-grid" style="display:none"></div>
+
+        <!-- TABLE VIEW -->
+        <div id="evidence-table-wrap" class="tbl-outer"><table>
           <thead><tr>
             <th onclick="setSort('evidence','ime')">Ime<span class="si">↕</span></th>
             <th onclick="setSort('evidence','prezime')">Prezime<span class="si">↕</span></th>
             <th>JMBG</th><th>Telefon</th>
             <th onclick="setSort('evidence','opstina')">Opština<span class="si">↕</span></th>
             <th onclick="setSort('evidence','ko')">KO<span class="si">↕</span></th>
-            <th>Parcela</th><th>Fotografije</th><th>DWG</th><th>Elaborat</th><th></th>
+            <th>Parcela</th>
+            <th>Predmet br.</th>
+            <th>Vrsta</th>
+            <th>Status</th>
+            <th>Rok</th>
+            <th>Fotografije</th><th>DWG</th><th>Elaborat</th><th></th>
           </tr></thead>
           <tbody id="evidence-tbody"></tbody>
         </table></div>
@@ -535,6 +606,29 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         </select>
       </div>
       <div class="form-group"><label>Godina izgradnje</label><input type="number" id="e-godina" placeholder="npr. 1998" min="1800" max="2100"></div>
+      <div class="form-group"><label>Br. predmeta</label><input type="text" id="e-predmetbr" placeholder="npr. 2024-001"></div>
+      <div class="form-group"><label>Vrsta elaborata</label>
+        <select id="e-vrsta">
+          <option value="">— nije uneseno —</option>
+          <option value="Parcelacija">Parcelacija</option>
+          <option value="Etažiranje">Etažiranje</option>
+          <option value="Legalizacija">Legalizacija</option>
+          <option value="Uknjižba">Uknjižba</option>
+          <option value="Geodetski snimak">Geodetski snimak</option>
+          <option value="Situacioni plan">Situacioni plan</option>
+          <option value="Ispravka granica">Ispravka granica</option>
+          <option value="Ostalo">Ostalo</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Status predmeta</label>
+        <select id="e-status">
+          <option value="pending">🟡 Na čekanju</option>
+          <option value="active" selected>🟢 U toku</option>
+          <option value="completed">🔵 Završen</option>
+          <option value="archived">⚫ Arhiva</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Rok / datum predaje</label><input type="date" id="e-rok"></div>
       <hr class="form-divider">
       <div class="form-group full"><label>📷 Fotografije</label><div class="file-zone"><input type="file" id="e-fotografije" multiple accept="image/*" onchange="handleFiles(this,'fotografije')"><div class="file-zone-icon">🖼️</div><div class="file-zone-text">Kliknite ili prevucite fotografije ovdje</div></div><div class="file-preview" id="fp-fotografije"></div></div>
       <div class="form-group full"><label>📐 DWG fajlovi</label><div class="file-zone"><input type="file" id="e-dwg" multiple accept=".dwg,.dxf,.pdf" onchange="handleFiles(this,'dwg')"><div class="file-zone-icon">📐</div><div class="file-zone-text">Kliknite ili prevucite DWG/DXF fajlove ovdje</div></div><div class="file-preview" id="fp-dwg"></div></div>
@@ -797,18 +891,15 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <button class="modal-close" onclick="closeModal('modal-ekatastar')">✕</button>
     </div>
 
-    <!-- Info o stranci -->
-    <div id="ekatastar-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--text2)"></div>
+    <div id="ekatastar-stranka-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)"></div>
 
-    <!-- Status bara -->
+    <!-- Status lokalnog servera -->
     <div id="ek-server-bar" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface2)">
-      <div id="ek-server-dot" style="width:9px;height:9px;border-radius:50%;background:var(--text4);flex-shrink:0;transition:background .3s"></div>
-      <span id="ek-server-label" style="flex:1">Provjeravam...</span>
-      <button class="btn btn-outline btn-sm" onclick="ekCheckServer()" style="font-size:11px">↻ Provjeri</button>
-      <button class="btn btn-outline btn-sm" id="btn-ek-start" onclick="ekStartServer()" style="font-size:11px;border-color:var(--accent);color:var(--accent);display:none">▶ Pokreni server</button>
+      <div id="ek-server-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text4);flex-shrink:0;transition:background .3s"></div>
+      <span id="ek-server-label">Provjeravam lokalni server...</span>
+      <button class="btn btn-outline btn-sm" onclick="ekCheckServer()" style="margin-left:auto;font-size:11px">↻ Provjeri</button>
     </div>
 
-    <!-- Forma -->
     <div class="form-grid form-grid-2">
       <div class="form-group">
         <label>Opština (Područna jedinica)</label>
@@ -845,7 +936,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       </div>
       <div class="form-group">
         <label>Broj parcele</label>
-        <input type="text" id="ek-parcela" placeholder="npr. 503 ili 503/1">
+        <input type="text" id="ek-parcela" placeholder="npr. 503">
       </div>
       <div class="form-group">
         <label>LN (List nepokretnosti)</label>
@@ -854,32 +945,43 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     </div>
 
     <!-- Panel A: server aktivan i konfigurisan -->
-    <div id="ek-panel-server" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:12px 16px;font-size:13px;color:#1b5e20">
-      <span style="font-weight:600">✓ Server spreman.</span>
-      Kliknite <strong>"Preuzmi automatski"</strong> — podaci se preuzimaju bez otvaranja browsera.
-      <span id="ek-server-user" style="color:#388e3c;font-size:12px;font-style:italic;display:block;margin-top:3px"></span>
-    </div>
-
-    <!-- Panel B: treba kredencijale -->
-    <div id="ek-panel-setup" style="display:none;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;padding:14px 16px;font-size:13px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#b71c1c;margin-bottom:10px">⚙ Postavi eKatastar kredencijale</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <input type="text"     id="ek-setup-user" placeholder="eKatastar email"  style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
-        <input type="password" id="ek-setup-pass" placeholder="Lozinka"          style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+    <div id="ek-panel-server" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2e7d32;margin-bottom:5px">✓ Lokalni server aktivan</div>
+      <div style="color:#1b5e20;line-height:1.7">
+        Kliknite <strong>"Preuzmi automatski"</strong> — Python script se sam prijavljuje i preuzima podatke.<br>
+        <span id="ek-server-user" style="color:#388e3c;font-size:12px;font-style:italic"></span>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="ekSaveSetup()">💾 Sačuvaj</button>
-      <div style="font-size:11px;color:#c62828;margin-top:6px">Čuva se u ~/.ekatastar_creds.json</div>
     </div>
 
-    <!-- Panel C: server nije pokrenut -->
-    <div id="ek-panel-bookmarklet" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:12px 16px;font-size:13px;color:#5a4000">
-      <strong>🔌 Server nije aktivan.</strong>
-      Kliknite <strong>"▶ Pokreni server"</strong> iznad ili pokrenite ručno:<br>
-      <code style="background:#fff;padding:2px 8px;border-radius:4px;font-family:monospace;font-size:12px;margin-top:5px;display:inline-block">python ekatastar.py --server</code>
+    <!-- Panel B: server aktivan, treba credentials -->
+    <div id="ek-panel-setup" style="display:none;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b71c1c;margin-bottom:8px">⚙ Server aktivan — postavi eKatastar kredencijale</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <input type="text"     id="ek-setup-user" placeholder="eKatastar email"    style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+        <input type="password" id="ek-setup-pass" placeholder="Lozinka"           style="font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="ekSaveSetup()">💾 Sačuvaj kredencijale</button>
+      <div style="font-size:11px;color:#c62828;margin-top:6px">Sačuvat će se lokalno u ~/.ekatastar_creds.json</div>
+    </div>
+
+    <!-- Panel C: server nije pokrenut — fallback bookmarklet -->
+    <div id="ek-panel-bookmarklet" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;line-height:2">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#7a6000;margin-bottom:5px">🔌 Lokalni server nije pokrenut</div>
+      <div style="color:#5a4000;font-size:12px">
+        <b>Opcija 1 — Automatski (preporučeno):</b><br>
+        &nbsp;&nbsp;<code style="background:#fff;padding:2px 7px;border-radius:4px;font-family:monospace">python ekatastar.py --server</code><br>
+        &nbsp;&nbsp;Zatim se vratite ovdje i kliknite "↻ Provjeri"<br><br>
+        <b>Opcija 2 — Ručno (bookmarklet):</b><br>
+        &nbsp;&nbsp;1. Kliknite "📋 Bookmarklet" → kopirajte kod<br>
+        &nbsp;&nbsp;2. Prijavite se na <a href="https://www.ekatastar.me/ekatastar-web/action/elogin" target="_blank" style="color:#BB0009">ekatastar.me</a> → pretražite parcelu<br>
+        &nbsp;&nbsp;3. Zalijepite bookmarklet u adresnu traku → Enter
+      </div>
     </div>
 
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar')">Zatvori</button>
+      <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 eKatastar</button>
+      <button class="btn btn-outline" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Bookmarklet</button>
       <button class="btn btn-primary" id="btn-ek-fetch" onclick="ekFetchData()" disabled>⬇ Preuzmi automatski</button>
     </div>
   </div>
@@ -902,7 +1004,6 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     </div>
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar-import')">Otkaži</button>
-      <button class="btn btn-outline" id="btn-primijeni-karticu" onclick="primijeniNaKarticu()" style="border-color:var(--accent);color:var(--accent)">✏ Primijeni na karticu</button>
       <button class="btn btn-primary" onclick="downloadSpisak()">⬇ Generiši Spisak prijava (.xlsx)</button>
     </div>
   </div>
@@ -1502,11 +1603,29 @@ function renderJobs(){
   document.getElementById('stat-jobs-done').textContent=DB.jobs.filter(j=>j.status==='completed').length;
   document.getElementById('stat-jobs-value').textContent=fmt(DB.jobs.reduce((s,j)=>s+(j.value||0),0));
 }
-function editEvidence(id){const e=DB.evidence.find(x=>x.id===id);if(!e)return;openModal('modal-evidence',id);document.getElementById('e-ime').value=e.ime||'';document.getElementById('e-prezime').value=e.prezime||'';document.getElementById('e-jmbg').value=e.jmbg||'';document.getElementById('e-telefon').value=e.telefon||'';document.getElementById('e-opstina').value=e.opstina||'';document.getElementById('e-ko').value=e.ko||'';document.getElementById('e-parcela').value=e.parcela||'';
+function editEvidence(id){
+  const e=DB.evidence.find(x=>x.id===id);if(!e)return;
+  openModal('modal-evidence',id);
+  document.getElementById('e-ime').value=e.ime||'';
+  document.getElementById('e-prezime').value=e.prezime||'';
+  document.getElementById('e-jmbg').value=e.jmbg||'';
+  document.getElementById('e-telefon').value=e.telefon||'';
+  document.getElementById('e-opstina').value=e.opstina||'';
+  document.getElementById('e-ko').value=e.ko||'';
+  document.getElementById('e-parcela').value=e.parcela||'';
   document.getElementById('e-imeoca').value=e.imeoca||'';
   document.getElementById('e-ln').value=e.ln||'';
   document.getElementById('e-spratnost').value=e.spratnost||'';
-  document.getElementById('e-godina').value=e.godina||'';tempFiles.fotografije=[...(e.fotografije||[])];tempFiles.dwg=[...(e.dwg||[])];tempFiles.elaborat=[...(e.elaborat||[])];renderFilePreview('fotografije');renderFilePreview('dwg');renderFilePreview('elaborat');}
+  document.getElementById('e-godina').value=e.godina||'';
+  document.getElementById('e-predmetbr').value=e.predmetBr||'';
+  document.getElementById('e-vrsta').value=e.vrsta||'';
+  document.getElementById('e-status').value=e.status||'active';
+  document.getElementById('e-rok').value=e.rokDatum||'';
+  tempFiles.fotografije=[...(e.fotografije||[])];
+  tempFiles.dwg=[...(e.dwg||[])];
+  tempFiles.elaborat=[...(e.elaborat||[])];
+  renderFilePreview('fotografije');renderFilePreview('dwg');renderFilePreview('elaborat');
+}
 
 // USER CARD
 const sLabel={pending:'Na čekanju',active:'Aktivan',completed:'Završen',cancelled:'Otkazan'};
@@ -1632,26 +1751,167 @@ function renderPayments(){
 function saveEvidence(){
   const ime=document.getElementById('e-ime').value.trim(),prezime=document.getElementById('e-prezime').value.trim();
   if(!ime||!prezime){toast('Ime i prezime su obavezni.','red');return;}
-  const d={ime,prezime,jmbg:document.getElementById('e-jmbg').value.trim(),telefon:document.getElementById('e-telefon').value.trim(),opstina:document.getElementById('e-opstina').value.trim(),ko:document.getElementById('e-ko').value.trim(),parcela:document.getElementById('e-parcela').value.trim(),
+  const d={ime,prezime,
+    jmbg:document.getElementById('e-jmbg').value.trim(),
+    telefon:document.getElementById('e-telefon').value.trim(),
+    opstina:document.getElementById('e-opstina').value.trim(),
+    ko:document.getElementById('e-ko').value.trim(),
+    parcela:document.getElementById('e-parcela').value.trim(),
     imeoca:document.getElementById('e-imeoca').value.trim(),
     ln:document.getElementById('e-ln').value.trim(),
     spratnost:document.getElementById('e-spratnost').value,
-    godina:document.getElementById('e-godina').value.trim(),fotografije:[...tempFiles.fotografije],dwg:[...tempFiles.dwg],elaborat:[...tempFiles.elaborat]};
+    godina:document.getElementById('e-godina').value.trim(),
+    predmetBr:document.getElementById('e-predmetbr').value.trim(),
+    vrsta:document.getElementById('e-vrsta').value,
+    status:document.getElementById('e-status').value||'active',
+    rokDatum:document.getElementById('e-rok').value,
+    fotografije:[...tempFiles.fotografije],dwg:[...tempFiles.dwg],elaborat:[...tempFiles.elaborat]};
   if(editingId.evidence){const idx=DB.evidence.findIndex(x=>x.id===editingId.evidence);if(idx!==-1)DB.evidence[idx]={...DB.evidence[idx],...d};toast('Zapis izmijenjen.','green');}
   else{DB.evidence.push({id:Date.now(),...d});toast('Zapis dodan.','green');}
   closeModal('modal-evidence');render();autoSave();
 }
+let evidenceView = 'table';
+let evidenceStatusFilter = '';
+
+function setEvidenceView(v) {
+  evidenceView = v;
+  document.getElementById('btn-view-grid').classList.toggle('active', v==='grid');
+  document.getElementById('btn-view-table').classList.toggle('active', v==='table');
+  document.getElementById('evidence-grid').style.display        = v==='grid'  ? '' : 'none';
+  document.getElementById('evidence-table-wrap').style.display  = v==='table' ? '' : 'none';
+  renderEvidence();
+}
+
+function setStatusFilter(el, s) {
+  evidenceStatusFilter = s;
+  document.querySelectorAll('.sf-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderEvidence();
+}
+
+function predmetStatusLabel(s) {
+  return {active:'🟢 U toku', pending:'🟡 Na čekanju', completed:'🔵 Završen', archived:'⚫ Arhiva'}[s] || '🟡 Na čekanju';
+}
+function predmetStatusClass(s) {
+  return {active:'ps-active', pending:'ps-pending', completed:'ps-completed', archived:'ps-archived'}[s] || 'ps-pending';
+}
+
 function renderEvidence(){
   const s=(document.getElementById('search-evidence')?.value||'').toLowerCase();
   const of_=document.getElementById('filter-e-opstina')?.value||'';
   let d=sortData(DB.evidence,sortState.evidence.col,sortState.evidence.dir);
-  if(s)d=d.filter(e=>(e.ime+' '+e.prezime+' '+(e.jmbg||'')+' '+(e.parcela||'')).toLowerCase().includes(s));
-  if(of_)d=d.filter(e=>e.opstina===of_);
+  if(s) d=d.filter(e=>(e.ime+' '+e.prezime+' '+(e.jmbg||'')+' '+(e.parcela||'')+' '+(e.predmetBr||'')).toLowerCase().includes(s));
+  if(of_) d=d.filter(e=>e.opstina===of_);
+  if(evidenceStatusFilter) d=d.filter(e=>(e.status||'active')===evidenceStatusFilter);
   updateSortIcons('evidence');
   const osel=document.getElementById('filter-e-opstina'),co=osel?.value;
   if(osel){const ops=[...new Set(DB.evidence.map(e=>e.opstina).filter(Boolean))].sort();osel.innerHTML='<option value="">Sve opštine</option>'+ops.map(o=>`<option value="${o}"${o===co?' selected':''}>${o}</option>`).join('');}
+
+  if(evidenceView==='grid') { renderEvidenceGrid(d); return; }
+
   const tbody=document.getElementById('evidence-tbody');
-  tbody.innerHTML=d.length?d.map(e=>`<tr><td>${e.ime}</td><td>${e.prezime}</td><td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td><td>${e.telefon||'—'}</td><td>${e.opstina||'—'}</td><td>${e.ko||'—'}</td><td>${e.parcela||'—'}</td><td>${renderAtt(e.id,'fotografije',e.fotografije)}</td><td>${renderAtt(e.id,'dwg',e.dwg)}</td><td>${renderAtt(e.id,'elaborat',e.elaborat)}</td><td><div class="td-actions"><button class="btn-card" onclick="showCard(${e.id})">Kartica</button><button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button><button class="btn-card" onclick="openEKatastar(${e.id})" style="color:#BB0009;border-color:#BB0009">🏛 eKatastar</button><button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button><button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button></div></td></tr>`).join(''):`<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
+  tbody.innerHTML=d.length?d.map(e=>{
+    const rokHtml = e.rokDatum ? `<span style="font-size:11px;color:${isRokBlizu(e.rokDatum)?'#c62828':'var(--text3)'}">${e.rokDatum}</span>` : '—';
+    return `<tr>
+      <td>${e.ime}</td><td>${e.prezime}</td>
+      <td style="font-family:monospace;font-size:12px">${e.jmbg||'—'}</td>
+      <td>${e.telefon||'—'}</td>
+      <td>${e.opstina||'—'}</td><td>${e.ko||'—'}</td><td>${e.parcela||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${e.predmetBr||'—'}</td>
+      <td style="font-size:11px">${e.vrsta||'—'}</td>
+      <td><span class="predmet-status ${predmetStatusClass(e.status)}">${predmetStatusLabel(e.status)}</span></td>
+      <td>${rokHtml}</td>
+      <td>${renderAtt(e.id,'fotografije',e.fotografije)}</td>
+      <td>${renderAtt(e.id,'dwg',e.dwg)}</td>
+      <td>${renderAtt(e.id,'elaborat',e.elaborat)}</td>
+      <td><div class="td-actions">
+        <button class="btn-card" onclick="showCard(${e.id})">Kartica</button>
+        <button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button>
+        <button class="btn-card" onclick="openEKatastar(${e.id})" style="color:#BB0009;border-color:#BB0009">🏛 eK</button>
+        <button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button>
+        <button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button>
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="15"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div></td></tr>`;
+}
+
+function isRokBlizu(rokDatum) {
+  if(!rokDatum) return false;
+  const diff = (new Date(rokDatum) - new Date()) / (1000*60*60*24);
+  return diff >= 0 && diff <= 7;
+}
+
+function renderEvidenceGrid(d) {
+  const grid = document.getElementById('evidence-grid');
+
+  // Grupiši po klijentu (JMBG ako postoji, inače ime+prezime)
+  const groups = {};
+  d.forEach(e => {
+    const key = e.jmbg || (e.ime + '_' + e.prezime);
+    if(!groups[key]) groups[key] = { key, ime: e.ime, prezime: e.prezime, jmbg: e.jmbg, telefon: e.telefon, predmeti: [] };
+    groups[key].predmeti.push(e);
+  });
+
+  if(!Object.keys(groups).length) {
+    grid.innerHTML = `<div class="empty" style="padding:40px"><div class="empty-icon">📋</div><div class="empty-text">Nema zapisa.</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = Object.values(groups).map(g => {
+    const initials = ((g.ime||'?')[0]+(g.prezime||'?')[0]).toUpperCase();
+    const predmetiHtml = g.predmeti.map(e => {
+      const rblizu = isRokBlizu(e.rokDatum);
+      const atts = [
+        ...(e.fotografije||[]).map((f,i)=>`<span class="predmet-att" onclick="openAttachment(${e.id},'fotografije',${i})">🖼 ${f.name.length>12?f.name.substring(0,10)+'…':f.name}</span>`),
+        ...(e.dwg||[]).map((f,i)=>`<span class="predmet-att" onclick="openAttachment(${e.id},'dwg',${i})">📐 ${f.name.length>12?f.name.substring(0,10)+'…':f.name}</span>`),
+        ...(e.elaborat||[]).map((f,i)=>`<span class="predmet-att" onclick="openAttachment(${e.id},'elaborat',${i})">📄 ${f.name.length>12?f.name.substring(0,10)+'…':f.name}</span>`)
+      ].join('');
+      return `<div class="predmet-card">
+        <div class="predmet-card-top">
+          <span class="predmet-br">${e.predmetBr || 'Predmet #'+e.id}</span>
+          <div class="predmet-actions">
+            <button class="predmet-action-btn" onclick="showCard(${e.id})" title="Kartica">👤</button>
+            <button class="predmet-action-btn" onclick="openElaborat(${e.id})" title="Elaborat">📄</button>
+            <button class="predmet-action-btn" onclick="openEKatastar(${e.id})" title="eKatastar" style="color:#BB0009">🏛</button>
+            <button class="predmet-action-btn" onclick="editEvidence(${e.id})" title="Izmijeni">✏</button>
+            <button class="predmet-action-btn" onclick="del('evidence',${e.id})" title="Obriši" style="color:var(--red)">🗑</button>
+          </div>
+        </div>
+        <div class="predmet-parcela">KP ${e.parcela||'—'}</div>
+        <div class="predmet-ko">${e.ko||''}${e.opstina?' · '+e.opstina:''}</div>
+        <div class="predmet-fields">
+          <div class="predmet-field"><div class="predmet-field-label">LN</div><div class="predmet-field-value">${e.ln||'—'}</div></div>
+          <div class="predmet-field"><div class="predmet-field-label">Vrsta</div><div class="predmet-field-value">${e.vrsta||'—'}</div></div>
+          ${e.spratnost?`<div class="predmet-field"><div class="predmet-field-label">Spratnost</div><div class="predmet-field-value">${e.spratnost}</div></div>`:''}
+          ${e.godina?`<div class="predmet-field"><div class="predmet-field-label">God. izgr.</div><div class="predmet-field-value">${e.godina}</div></div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="predmet-status ${predmetStatusClass(e.status)}">${predmetStatusLabel(e.status)}</span>
+          ${e.rokDatum?`<span class="predmet-rok${rblizu?' rok-blizu':''}">${rblizu?'⚠ ':'📅 '}${e.rokDatum}</span>`:''}
+        </div>
+        ${atts?`<div class="predmet-atts">${atts}</div>`:''}
+      </div>`;
+    }).join('');
+
+    return `<div class="client-group" id="cg-${g.key}">
+      <div class="client-group-header" onclick="toggleClientGroup('cg-${g.key}')">
+        <div class="client-avatar">${initials}</div>
+        <div>
+          <div class="client-name">${g.prezime} ${g.ime}</div>
+          <div class="client-meta">${g.jmbg?'JMBG: '+g.jmbg:''}${g.telefon?' · '+g.telefon:''}</div>
+        </div>
+        <span class="client-count">${g.predmeti.length} predmet${g.predmeti.length===1?'':'a'}</span>
+        <span class="client-collapse-icon">▼</span>
+      </div>
+      <div class="client-predmeti">${predmetiHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleClientGroup(id) {
+  const el = document.getElementById(id);
+  if(el) el.classList.toggle('collapsed');
+}
 }
 function renderAtt(rid,field,files){
   if(!files||!files.length)return'<span style="color:var(--text4);font-size:12px">—</span>';
@@ -2542,8 +2802,6 @@ function openEKatastar(evId) {
   const ev = DB.evidence.find(e => e.id === evId);
   if (!ev) return;
 
-  window._ekatastarEvId = evId;
-
   // Show info
   document.getElementById('ekatastar-stranka-info').innerHTML =
     `<strong>${ev.prezime} ${ev.ime}</strong> &nbsp;·&nbsp; ` +
@@ -2648,6 +2906,7 @@ function checkEKatastarHash() {
 }
 
 function importEKatastarData(data) {
+  // Show import modal with preview
   document.getElementById('ek-import-ko').textContent   = data.ko || '—';
   document.getElementById('ek-import-ln').textContent   = data.ln || '—';
   document.getElementById('ek-import-vlasnici').textContent =
@@ -2662,80 +2921,7 @@ function importEKatastarData(data) {
     ).join('<br>') || '—';
 
   window._ekatastarImportData = data;
-
-  // Dugme Primijeni — samo kad je modal otvoren iz kartice
-  const btn = document.getElementById('btn-primijeni-karticu');
-  if (btn) btn.style.display = window._ekatastarEvId ? '' : 'none';
-
   document.getElementById('modal-ekatastar-import').classList.add('open');
-}
-
-function primijeniNaKarticu() {
-  const data = window._ekatastarImportData;
-  const evId = window._ekatastarEvId;
-  if (!data || !evId) return;
-  const ev = DB.evidence.find(e => e.id === evId);
-  if (!ev) return;
-
-  // Popuni samo prazna polja
-  const prvi = (data.vlasnici || [])[0] || {};
-  if (!ev.jmbg    && prvi.jmbg)     ev.jmbg    = prvi.jmbg;
-  if (!ev.ln      && data.ln)       ev.ln      = data.ln;
-  if (!ev.ko      && data.ko)       ev.ko      = data.ko;
-  if (!ev.opstina && data.opstina)  ev.opstina = data.opstina;
-  if (!ev.parcela && (data.parcele||[]).length) {
-    const p = data.parcele[0];
-    ev.parcela = p.podbroj && p.podbroj !== '0' ? `${p.broj}/${p.podbroj}` : p.broj;
-  }
-  if (!ev.spratnost && (data.objekti||[]).length)
-    ev.spratnost = data.objekti[0].spratnost || '';
-
-  autoSave(); render();
-  closeModal('modal-ekatastar-import');
-  toast('✓ Kartica popunjena podacima sa eKatastara', 'green');
-  showCard(evId);
-}
-
-async function downloadSpisak() {
-  const data = window._ekatastarImportData;
-  if (!data) return;
-  showLoading('Generišem Spisak prijava...');
-  try {
-    if (ekServerAvailable && ekServerConfigured) {
-      await downloadSpisakViaServer(data);
-    } else {
-      await generateSpisakPrijava(data);
-    }
-  } finally {
-    hideLoading();
-  }
-}
-
-async function downloadSpisakViaServer(data) {
-  try {
-    const r = await fetch(EK_SERVER + '/fetch', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ only_excel: true, data: data }),
-      signal: AbortSignal.timeout(30000)
-    });
-    const d = await r.json();
-    if (d.excel_b64 && d.excel_name) {
-      const bytes = Uint8Array.from(atob(d.excel_b64), c => c.charCodeAt(0));
-      const blob  = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url   = URL.createObjectURL(blob);
-      const a     = document.createElement('a');
-      a.href = url; a.download = d.excel_name; a.click();
-      URL.revokeObjectURL(url);
-      closeModal('modal-ekatastar-import');
-      toast('✓ Spisak prijava preuzet!', 'green');
-    } else {
-      throw new Error(d.error || 'Server nije vratio Excel');
-    }
-  } catch(e) {
-    toast('Server fallback na SheetJS...', 'amber');
-    await generateSpisakPrijava(data);
-  }
 }
 
 async function downloadSpisak() {
@@ -2903,6 +3089,7 @@ window.addEventListener('load',()=>{
 
 // =============================================================================
 // eKatastar Lokalni Server Integracija
+// WorkVault automatski detektuje ekatastar.py --server na localhost:5731
 // =============================================================================
 
 const EK_SERVER = 'http://localhost:5731';
@@ -2916,16 +3103,16 @@ async function ekCheckServer() {
   const pB     = document.getElementById('ek-panel-setup');
   const pC     = document.getElementById('ek-panel-bookmarklet');
   const btnF   = document.getElementById('btn-ek-fetch');
-  const btnS   = document.getElementById('btn-ek-start');
 
-  dot.style.background = 'var(--amber)';
-  label.textContent    = 'Provjeravam...';
+  dot.style.background   = 'var(--amber)';
+  label.textContent      = 'Provjeravam...';
   [pA, pB, pC].forEach(p => { if(p) p.style.display = 'none'; });
   if(btnF) btnF.disabled = true;
-  if(btnS) btnS.style.display = 'none';
 
   try {
-    const r = await fetch(EK_SERVER + '/status', { signal: AbortSignal.timeout(2500) });
+    const r = await fetch(EK_SERVER + '/status', {
+      signal: AbortSignal.timeout(2500)
+    });
     if (!r.ok) throw new Error('not ok');
     const s = await r.json();
 
@@ -2933,50 +3120,25 @@ async function ekCheckServer() {
     ekServerConfigured = s.configured;
 
     if (s.configured) {
-      dot.style.background = '#43a047';
-      label.textContent    = '● Aktivan  ·  ' + s.username;
+      dot.style.background  = '#43a047';
+      label.textContent     = 'Lokalni server aktivan  ·  ' + s.username;
       if (pA) pA.style.display = 'block';
       if (btnF) btnF.disabled  = false;
       const su = document.getElementById('ek-server-user');
-      if (su) su.textContent = 'Prijava: ' + s.username;
+      if (su) su.textContent = 'Prijavljen kao: ' + s.username;
     } else {
-      dot.style.background = 'var(--amber)';
-      label.textContent    = '● Server aktivan — potrebni kredencijali';
+      dot.style.background  = 'var(--amber)';
+      label.textContent     = 'Server aktivan — potrebni kredencijali';
       if (pB) pB.style.display = 'block';
     }
   } catch (e) {
     ekServerAvailable  = false;
     ekServerConfigured = false;
-    dot.style.background = '#ef5350';
-    label.textContent    = '● Server nije aktivan';
+    dot.style.background  = 'var(--text4)';
+    label.textContent     = 'Lokalni server nije pokrenut';
     if (pC) pC.style.display = 'block';
-    if (btnS) btnS.style.display = '';  // Prikaži dugme Pokreni server
   }
 }
-
-async function ekStartServer() {
-  const btn = document.getElementById('btn-ek-start');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Pokrećem...'; }
-  try {
-    const r = await fetch(EK_SERVER + '/start', {
-      method: 'POST',
-      signal: AbortSignal.timeout(5000)
-    });
-    const d = await r.json();
-    if (d.ok) {
-      toast('✓ Server pokrenut!', 'green');
-      setTimeout(ekCheckServer, 2000);
-    } else {
-      toast('Greška: ' + (d.error || '?'), 'red');
-    }
-  } catch(e) {
-    // Server nije mogao odgovoriti na /start — pokušaj direktno pokrenuti
-    toast('Nije moguće automatski pokrenuti server. Pokrenite ručno: python ekatastar.py --server', 'amber');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '▶ Pokreni server'; }
-  }
-}
-
 
 async function ekSaveSetup() {
   const u = (document.getElementById('ek-setup-user') || {}).value || '';
