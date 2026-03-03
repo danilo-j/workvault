@@ -2550,7 +2550,6 @@ function openEKatastar(evId) {
   const ev = DB.evidence.find(e => e.id === evId);
   if (!ev) return;
 
-  // Zapamti koji ev je pokrenuo modal
   window._ekatastarEvId = evId;
 
   // Show info
@@ -2657,7 +2656,6 @@ function checkEKatastarHash() {
 }
 
 function importEKatastarData(data) {
-  // Show import modal with preview
   document.getElementById('ek-import-ko').textContent   = data.ko || '—';
   document.getElementById('ek-import-ln').textContent   = data.ln || '—';
   document.getElementById('ek-import-vlasnici').textContent =
@@ -2673,9 +2671,8 @@ function importEKatastarData(data) {
 
   window._ekatastarImportData = data;
 
-  // Prikaži/sakrij dugme Primijeni zavisno od toga da li postoji kartica
-  const btnPrimijeni = document.getElementById('btn-primijeni-karticu');
-  if (btnPrimijeni) btnPrimijeni.style.display = window._ekatastarEvId ? '' : 'none';
+  const btn = document.getElementById('btn-primijeni-karticu');
+  if (btn) btn.style.display = window._ekatastarEvId ? '' : 'none';
 
   document.getElementById('modal-ekatastar-import').classList.add('open');
 }
@@ -2688,32 +2685,24 @@ function primijeniNaKarticu() {
   const ev = DB.evidence.find(e => e.id === evId);
   if (!ev) return;
 
-  // Popuni samo prazna polja — ne prepisuj postojeće podatke
   const prvi = (data.vlasnici || [])[0] || {};
+  if (!ev.jmbg    && prvi.jmbg)     ev.jmbg    = prvi.jmbg;
+  if (!ev.ln      && data.ln)       ev.ln      = data.ln;
+  if (!ev.ko      && data.ko)       ev.ko      = data.ko;
+  if (!ev.opstina && data.opstina)  ev.opstina = data.opstina;
 
-  if (!ev.jmbg    && prvi.jmbg)       ev.jmbg    = prvi.jmbg;
-  if (!ev.ln      && data.ln)         ev.ln      = data.ln;
-  if (!ev.ko      && data.ko)         ev.ko      = data.ko;
-  if (!ev.opstina && data.opstina)    ev.opstina = data.opstina;
-
-  // Parcela — uzmi prvi broj/podbroj iz liste parcela
-  if (!ev.parcela && data.parcele && data.parcele.length) {
+  if (!ev.parcela && (data.parcele || []).length) {
     const p   = data.parcele[0];
     const pbr = p.podbroj && p.podbroj !== '0' ? `/${p.podbroj}` : '';
     ev.parcela = `${p.broj}${pbr}`;
   }
-
-  // Spratnost — uzmi iz prvog objekta
-  if (!ev.spratnost && data.objekti && data.objekti.length) {
+  if (!ev.spratnost && (data.objekti || []).length)
     ev.spratnost = data.objekti[0].spratnost || '';
-  }
 
   autoSave();
   render();
-  document.getElementById('modal-ekatastar-import').classList.remove('open');
-  toast(`✓ Kartica popunjena sa podacima eKatastara`, 'green');
-
-  // Otvori karticu da korisnik vidi promjene
+  closeModal('modal-ekatastar-import');
+  toast('✓ Kartica popunjena podacima sa eKatastara', 'green');
   showCard(evId);
 }
 
@@ -2722,9 +2711,52 @@ async function downloadSpisak() {
   if (!data) return;
   showLoading('Generišem Spisak prijava...');
   try {
-    await generateSpisakPrijava(data);
+    // Ako je server dostupan — koristi openpyxl (100% formatiranje)
+    if (ekServerAvailable && ekServerConfigured) {
+      await downloadSpisakViaServer(data);
+    } else {
+      await generateSpisakPrijava(data);
+    }
   } finally {
     hideLoading();
+  }
+}
+
+async function downloadSpisakViaServer(data) {
+  try {
+    const r = await fetch(EK_SERVER + '/fetch', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        ko:         data.ko      || '',
+        opstina:    data.opstina || '',
+        parcela:    data.parcela_pretrage || '',
+        ln:         data.ln      || '',
+        only_excel: true,   // ne scrape ponovo, koristi data ispod
+        data:       data        // vec scrapeovani podaci
+      }),
+      signal: AbortSignal.timeout(30000)
+    });
+    const d = await r.json();
+    if (d.excel_b64 && d.excel_name) {
+      // Preuzmi fajl iz base64 — formatiranje 100% sačuvano
+      const bytes   = Uint8Array.from(atob(d.excel_b64), c => c.charCodeAt(0));
+      const blob    = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url     = URL.createObjectURL(blob);
+      const a       = document.createElement('a');
+      a.href        = url;
+      a.download    = d.excel_name;
+      a.click();
+      URL.revokeObjectURL(url);
+      closeModal('modal-ekatastar-import');
+      toast('✓ Spisak prijava preuzet (openpyxl)!', 'green');
+    } else {
+      throw new Error(d.error || 'Server nije vratio Excel');
+    }
+  } catch(e) {
+    // Fallback na SheetJS ako server ne odgovori
+    toast('Server nedostupan, koristim SheetJS fallback...', 'amber');
+    await generateSpisakPrijava(data);
   }
 }
 
