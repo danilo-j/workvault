@@ -150,42 +150,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:14px;color:var(--text2);font-weight:500}
-/* DASHBOARD */
-.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
-.dash-grid-2{grid-template-columns:repeat(2,1fr)}
-.dash-welcome{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border-radius:16px;padding:22px 28px;margin-bottom:22px;display:flex;align-items:center;gap:18px}
-.dash-welcome-avatar{width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;flex-shrink:0}
-.dash-welcome-name{font-family:var(--serif);font-size:22px;font-weight:700}
-.dash-welcome-sub{font-size:13px;opacity:.85;margin-top:2px}
-.dash-welcome-right{margin-left:auto;text-align:right;font-size:12px;opacity:.8}
-.dash-welcome-right strong{display:block;font-size:15px;opacity:1}
-.dash-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
-.dash-section-title{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:6px}
-.dash-quick-btns{display:flex;flex-direction:column;gap:6px}
-.dash-quick-btn{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;text-align:left}
-.dash-quick-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
-.dash-recent{display:flex;flex-direction:column;gap:6px}
-.dash-recent-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--bg2);font-size:12px}
-.dash-recent-icon{font-size:14px;flex-shrink:0}
-.dash-recent-name{font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dash-recent-meta{color:var(--text3);font-size:11px;white-space:nowrap}
-.dash-saldo-card{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:white;border-radius:14px;padding:18px 20px}
-.dash-saldo-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.8;margin-bottom:4px}
-.dash-saldo-val{font-family:var(--serif);font-size:28px;font-weight:700}
-.dash-saldo-sub{font-size:12px;opacity:.75;margin-top:3px}
-.dash-alert{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:500;margin-bottom:8px}
-.dash-alert-warn{background:var(--amber-light);color:var(--amber);border:1px solid rgba(180,83,9,.2)}
-.dash-alert-red{background:var(--red-light);color:var(--red);border:1px solid rgba(220,38,38,.2)}
-.dash-stat-mini{text-align:center;padding:14px 10px}
-.dash-stat-mini-val{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text)}
-.dash-stat-mini-label{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-top:2px}
-/* USER SETTINGS MODAL */
-.settings-section{margin-bottom:20px}
-.settings-section-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.stamp-preview{width:80px;height:80px;border:2px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;overflow:hidden;transition:all .15s;background:var(--surface2)}
-.stamp-preview:hover{border-color:var(--accent)}
-.stamp-preview img{width:100%;height:100%;object-fit:contain}
-
+/* REPORTS */
 .report-controls{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .year-tabs{display:flex;gap:4px;flex-wrap:wrap}
 .year-tab{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);transition:all .15s;font-family:var(--sans)}
@@ -323,13 +288,11 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     </div>
     <div class="nav-section">
       <div class="nav-label">Sekcije</div>
-      <div class="nav-item" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon">🏠</span>Dashboard</div>
       <div class="nav-item active" onclick="showPage('payments')" id="nav-payments"><span class="nav-icon">💳</span>Plaćanja<span class="nav-badge" id="badge-payments">0</span></div>
       <div class="nav-item" onclick="showPage('jobs')" id="nav-jobs"><span class="nav-icon">🔧</span>Poslovi<span class="nav-badge" id="badge-jobs">0</span></div>
       <div class="nav-item" onclick="showPage('racun')" id="nav-racun"><span class="nav-icon">🏦</span>Račun<span class="nav-badge" id="badge-racun-saldo" style="background:var(--blue)">€0</span></div>
       <div class="nav-item" onclick="showPage('evidence')" id="nav-evidence"><span class="nav-icon">📋</span>Evidencija<span class="nav-badge" id="badge-evidence">0</span></div>
       <div class="nav-item" onclick="showPage('reports')" id="nav-reports"><span class="nav-icon">📊</span>Izvještaji</div>
-      <div class="nav-item" onclick="openModal('modal-user-settings')" id="nav-settings" style="margin-top:4px"><span class="nav-icon">⚙️</span>Podešavanja</div>
     </div>
     <div class="drive-status"><div class="drive-dot" id="drive-dot"></div><span id="drive-status-text">Nije sinhronizovano</span></div>
     <div style="padding:8px 12px;display:flex;gap:6px">
@@ -344,85 +307,6 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
   </nav>
 
   <main class="main">
-
-    <!-- DASHBOARD PAGE -->
-    <div class="page" id="page-dashboard">
-      <div class="page-header">
-        <div><div class="page-eyebrow">Pregled</div><div class="page-title">Dashboard</div></div>
-        <button class="btn btn-outline" onclick="openModal('modal-user-settings')">⚙️ Podešavanja profila</button>
-      </div>
-      <!-- Welcome banner -->
-      <div class="dash-welcome" id="dash-welcome-banner">
-        <div class="dash-welcome-avatar" id="dash-welcome-initials">?</div>
-        <div>
-          <div class="dash-welcome-name" id="dash-welcome-name">Dobrodošli</div>
-          <div class="dash-welcome-sub" id="dash-welcome-sub">WorkVault · Upravljanje geodetskim radovima</div>
-        </div>
-        <div class="dash-welcome-right">
-          <span id="dash-today-date"></span>
-          <strong id="dash-licence-badge"></strong>
-        </div>
-      </div>
-
-      <!-- Alerts (rokovi) -->
-      <div id="dash-alerts"></div>
-
-      <!-- Stats row -->
-      <div class="dash-grid" style="margin-bottom:22px">
-        <div class="stat-card dash-saldo-card">
-          <div class="dash-saldo-label">Stanje računa</div>
-          <div class="dash-saldo-val" id="dash-saldo-val">€0.00</div>
-          <div class="dash-saldo-sub" id="dash-saldo-sub">Bankovni račun</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Aktivni predmeti</div>
-          <div class="stat-value green" id="dash-active-predmeti">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Aktivni poslovi</div>
-          <div class="stat-value blue" id="dash-active-jobs">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Prihodi (ova god.)</div>
-          <div class="stat-value" id="dash-year-income">€0</div>
-        </div>
-      </div>
-
-      <!-- Main 2 col grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-
-        <!-- Quick actions -->
-        <div class="dash-section">
-          <div class="dash-section-title">⚡ Brze akcije</div>
-          <div class="dash-quick-btns">
-            <button class="dash-quick-btn" onclick="openModal('modal-evidence')">📋 Novi predmet evidencije</button>
-            <button class="dash-quick-btn" onclick="openModal('modal-job')">🔧 Novi posao</button>
-            <button class="dash-quick-btn" onclick="openModal('modal-payment')">💳 Novo plaćanje</button>
-            <button class="dash-quick-btn" onclick="openModal('modal-racun-tx')">🏦 Nova transakcija na računu</button>
-          </div>
-        </div>
-
-        <!-- Recent evidence -->
-        <div class="dash-section">
-          <div class="dash-section-title">🕐 Nedavni predmeti</div>
-          <div class="dash-recent" id="dash-recent-evidence"></div>
-        </div>
-      </div>
-
-      <!-- Bottom 2 col -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <!-- Pending jobs -->
-        <div class="dash-section">
-          <div class="dash-section-title">🔧 Poslovi na čekanju</div>
-          <div class="dash-recent" id="dash-pending-jobs"></div>
-        </div>
-        <!-- Račun summary -->
-        <div class="dash-section">
-          <div class="dash-section-title">📊 Finansijski pregled (ova godina)</div>
-          <div id="dash-fin-summary"></div>
-        </div>
-      </div>
-    </div>
 
     <!-- PAYMENTS PAGE -->
     <div class="page active" id="page-payments">
@@ -574,14 +458,6 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
           <tbody id="racun-tbody"></tbody>
         </table></div>
       </div>
-
-      <!-- SALDO SVOĐENJE -->
-      <div class="table-wrap" style="margin-top:20px">
-        <div class="table-toolbar">
-          <span class="table-toolbar-title">📊 Saldo svođenje — po mjesecima</span>
-        </div>
-        <div style="padding:16px" id="racun-saldo-report"></div>
-      </div>
     </div>
 
     <!-- EVIDENCE PAGE -->
@@ -710,20 +586,8 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div class="form-group"><label>Prezime</label><input type="text" id="e-prezime" placeholder="Prezime"></div>
       <div class="form-group"><label>JMBG</label><input type="text" id="e-jmbg" placeholder="1234567890123" maxlength="13"></div>
       <div class="form-group"><label>Telefon</label><input type="text" id="e-telefon" placeholder="+382 ..."></div>
-      <div class="form-group"><label>Opština</label>
-        <select id="e-opstina" onchange="filterKOByOpstina()">
-          <option value="">— odaberite opštinu —</option>
-          <option>Andrijevica</option><option>Bar</option><option>Berane</option>
-          <option>Bijelo Polje</option><option>Budva</option><option>Cetinje</option>
-          <option>Danilovgrad</option><option>Gusinje</option><option>Herceg Novi</option>
-          <option>Kolašin</option><option>Kotor</option><option>Mojkovac</option>
-          <option>Nikšić</option><option>Petnjica</option><option>Plav</option>
-          <option>Pljevlja</option><option>Plužine</option><option>Podgorica</option>
-          <option>Rožaje</option><option>Šavnik</option><option>Tivat</option>
-          <option>Ulcinj</option><option>Žabljak</option>
-        </select>
-      </div>
-      <div class="form-group"><label>KO (Katastarska opština)</label><input type="text" id="e-ko" placeholder="Katastarska opština" list="ko-datalist"><datalist id="ko-datalist"></datalist></div>
+      <div class="form-group"><label>Opština</label><input type="text" id="e-opstina" placeholder="Opština"></div>
+      <div class="form-group"><label>KO</label><input type="text" id="e-ko" placeholder="Katastarska opština"></div>
       <div class="form-group full"><label>Parcela</label><input type="text" id="e-parcela" placeholder="Broj parcele"></div>
       <div class="form-group"><label>Ime oca</label><input type="text" id="e-imeoca" placeholder="Ime oca"></div>
       <div class="form-group"><label>LN broj</label><input type="text" id="e-ln" placeholder="List nepokretnosti"></div>
@@ -1118,7 +982,6 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar')">Zatvori</button>
       <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 eKatastar</button>
       <button class="btn btn-outline" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Bookmarklet</button>
-      <button class="btn btn-outline" onclick="ekOrtofoto()" id="btn-ek-ortofoto" style="border-color:#1565C0;color:#1565C0" title="Ortofoto screenshot parcele">🛰 Ortofoto</button>
       <button class="btn btn-primary" id="btn-ek-fetch" onclick="ekFetchData()" disabled>⬇ Preuzmi automatski</button>
     </div>
   </div>
@@ -1161,95 +1024,6 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     </div>
     <div class="form-actions">
       <button class="btn btn-outline" onclick="document.getElementById('modal-spisak-upload').classList.remove('open')">Otkaži</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: USER SETTINGS (Korisnički profil) -->
-<div class="modal-overlay" id="modal-user-settings">
-  <div class="modal wide">
-    <div class="modal-header">
-      <div class="modal-title">⚙️ Podešavanja korisnika</div>
-      <button class="modal-close" onclick="closeModal('modal-user-settings')">✕</button>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">👤 Lični podaci</div>
-      <div class="form-grid form-grid-3">
-        <div class="form-group"><label>Ime</label><input type="text" id="us-ime" placeholder="Vaše ime"></div>
-        <div class="form-group"><label>Prezime</label><input type="text" id="us-prezime" placeholder="Vaše prezime"></div>
-        <div class="form-group"><label>Naziv firme / obrta</label><input type="text" id="us-firma" placeholder="npr. GEO d.o.o."></div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">📋 Licenca i ovlaštenje</div>
-      <div class="form-grid form-grid-2">
-        <div class="form-group"><label>Broj licence / ovlaštenja</label><input type="text" id="us-licenca" placeholder="npr. GEO-2024-001"></div>
-        <div class="form-group"><label>Defaultna opština rada</label>
-          <select id="us-default-opstina">
-            <option value="">— odaberite —</option>
-            <option>Andrijevica</option><option>Bar</option><option>Berane</option>
-            <option>Bijelo Polje</option><option>Budva</option><option>Cetinje</option>
-            <option>Danilovgrad</option><option>Gusinje</option><option>Herceg Novi</option>
-            <option>Kolašin</option><option>Kotor</option><option>Mojkovac</option>
-            <option>Nikšić</option><option>Petnjica</option><option>Plav</option>
-            <option>Pljevlja</option><option>Plužine</option><option>Podgorica</option>
-            <option>Rožaje</option><option>Šavnik</option><option>Tivat</option>
-            <option>Ulcinj</option><option>Žabljak</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">📄 Format i fiskalna godina</div>
-      <div class="form-grid form-grid-2">
-        <div class="form-group">
-          <label>Format broja predmeta</label>
-          <select id="us-format-predmeta">
-            <option value="NNN/YYYY">NNN/YYYY — npr. 001/2025</option>
-            <option value="NNN/MM/YYYY">NNN/MM/YYYY — npr. 001/03/2025</option>
-            <option value="YYYY-NNN">YYYY-NNN — npr. 2025-001</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Fiskalna godina (početak)</label>
-          <select id="us-fiskalna-god">
-            <option value="1">Januar</option><option value="2">Februar</option>
-            <option value="3">Mart</option><option value="4">April</option>
-            <option value="5">Maj</option><option value="6">Jun</option>
-            <option value="7">Jul</option><option value="8">Avgust</option>
-            <option value="9">Septembar</option><option value="10">Oktobar</option>
-            <option value="11">Novembar</option><option value="12">Decembar</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">✍️ Potpis i pečat</div>
-      <div style="display:flex;gap:20px;align-items:flex-start">
-        <div>
-          <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px">PEČAT FIRME</div>
-          <div class="stamp-preview" id="stamp-preview" onclick="document.getElementById('stamp-upload').click()" title="Kliknite za upload">
-            <span id="stamp-preview-placeholder">🔴</span>
-          </div>
-          <input type="file" id="stamp-upload" accept="image/*" style="display:none" onchange="handleStampUpload(this)">
-          <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:center">Kliknite za upload</div>
-          <button class="btn btn-outline btn-sm" style="margin-top:6px;width:100%" onclick="removeStamp()" id="btn-remove-stamp" style="display:none">Ukloni</button>
-        </div>
-        <div style="flex:1">
-          <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px">POTPIS (tekst za dokumente)</div>
-          <textarea id="us-potpis" placeholder="npr.&#10;Ing. Marko Marković&#10;Ovlašteni geodetski inženjer&#10;Licenca br. GEO-2024-001" style="height:90px;font-size:12px"></textarea>
-          <div style="font-size:11px;color:var(--text3);margin-top:4px">Ovaj tekst se koristi kao potpis pri generisanju dokumenata.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-actions">
-      <button class="btn btn-outline" onclick="closeModal('modal-user-settings')">Otkaži</button>
-      <button class="btn btn-primary" onclick="saveUserSettings()">💾 Sačuvaj podešavanja</button>
     </div>
   </div>
 </div>
@@ -1723,21 +1497,14 @@ function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  const navEl = document.getElementById('nav-'+name);
-  if(navEl) navEl.classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
   if(name==='reports')renderReports();
-  if(name==='racun'){renderRacun();setTimeout(renderRacunSaldoReport,100);}
-  if(name==='dashboard')renderDashboard();
+  if(name==='racun')renderRacun();
 }
 
 // MODALS
 function openModal(id,eid=null){
   if(id==='modal-racun-tx'){openModal_racun_tx_new();return;}
-  if(id==='modal-user-settings'){
-    document.getElementById(id).classList.add('open');
-    loadUserSettingsForm();
-    return;
-  }
   document.getElementById(id).classList.add('open');
   const dm={'modal-payment':'p-date','modal-job':'j-date'};
   const tm={'modal-payment':'payments','modal-job':'jobs','modal-evidence':'evidence'};
@@ -1757,19 +1524,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 function resetEvidenceForm(){
   tempFiles={fotografije:[],dwg:[],elaborat:[]};
   ['fotografije','dwg','elaborat'].forEach(k=>{document.getElementById('fp-'+k).innerHTML='';document.getElementById('e-'+k).value='';});
-  ['e-ime','e-prezime','e-jmbg','e-telefon','e-ko','e-parcela','e-imeoca','e-ln','e-predmetbr','e-godina'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  // Set opstina to default if configured
-  const prefs=getUserPrefs();
-  const opEl=document.getElementById('e-opstina');
-  if(opEl){opEl.value=prefs.defaultOpstina||'';filterKOByOpstina();}
-  // Auto-generate predmet br
-  const pbEl=document.getElementById('e-predmetbr');
-  if(pbEl)pbEl.placeholder='npr. '+generateNextPredmetBr();
-  // Reset selects
-  const selStatus=document.getElementById('e-status');if(selStatus)selStatus.value='active';
-  const selSprat=document.getElementById('e-spratnost');if(selSprat)selSprat.value='';
-  const selVrsta=document.getElementById('e-vrsta');if(selVrsta)selVrsta.value='';
-  const selRok=document.getElementById('e-rok');if(selRok)selRok.value='';
+  ['e-ime','e-prezime','e-jmbg','e-telefon','e-opstina','e-ko','e-parcela'].forEach(id=>document.getElementById(id).value='');
 }
 function handleFiles(input,field){
   Array.from(input.files).forEach(file=>{
@@ -2156,6 +1911,7 @@ function renderEvidenceGrid(d) {
 function toggleClientGroup(id) {
   const el = document.getElementById(id);
   if(el) el.classList.toggle('collapsed');
+}
 }
 function renderAtt(rid,field,files){
   if(!files||!files.length)return'<span style="color:var(--text4);font-size:12px">—</span>';
@@ -3323,9 +3079,8 @@ function render(){
 // INIT
 window.addEventListener('load',()=>{
   showLoading('Inicijalizujem...');
-  // Apply saved user prefs immediately
-  applyUserPrefs();
-  gapi.load('client',async()=>{\n    await gapi.client.init({apiKey:API_KEY,discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});
+  gapi.load('client',async()=>{
+    await gapi.client.init({apiKey:API_KEY,discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']});
     const stored=sessionStorage.getItem('wv_token');
     if(stored){accessToken=stored;gapi.client.setToken({access_token:accessToken});await onSignedIn();}
     else{hideLoading();document.getElementById('login-screen').style.display='flex';}
@@ -3456,442 +3211,7 @@ async function ekFetchData() {
   }
 }
 
-// =====================================================
-// KO MAP po opštinama (za datalist/autocomplete)
-// =====================================================
-const KO_BY_OPSTINA = {
-  'Bijelo Polje': ['Babajići','Barice','Bijelo Polje','Bistrica','Bliškovo','Bojišta','Boljanin','Cerovo','Crniš','Crnča - Laholo','Dobrinje','Dubovo','Femića Krš','Godijevo','Goduša','Grab','Grančarevo','Ivanje','Jablanovo','Jabučno','Kanje','Kičava','Korita','Kostenica','Kovren','Kradenik','Kukulje','Lekovina','Lijeska','Lješnica','Lozna','Majstorovina','Milovo','Mioče','Mojstir','Muslići','Negobratina','Orahovica','Pali','Pape','Pavino Polje','Pećarska','Poda','Potrk','Prijelozi','Radulići','Ravna Rijeka','Sipanje','Sokolac','Srednje Brdo','Stožer','Tomaševo','Ujniče','Zaton','Čeoče','Čokrlije'],
-  'Podgorica': ['Podgorica','Golubovci','Tuzi','Zeta','Lijeva Rijeka','Bioče'],
-  'Bar': ['Bar','Sutomore','Čanj','Ulcinj','Šušanj'],
-  'Budva': ['Budva','Petrovac','Sveti Stefan'],
-  'Kotor': ['Kotor','Herceg Novi','Risan','Tivat','Perast'],
-  'Nikšić': ['Nikšić','Šavnik','Plužine','Danilovgrad'],
-  'Berane': ['Berane','Petnjica','Rožaje','Andrijevica','Gusinje'],
-  'Bijelo Polje': ['Bijelo Polje'],
-  'Kolašin': ['Kolašin','Mojkovac'],
-  'Plav': ['Plav','Gusinje'],
-  'Pljevlja': ['Pljevlja','Žabljak'],
-  'Cetinje': ['Cetinje'],
-};
-
-function filterKOByOpstina() {
-  const opstina = document.getElementById('e-opstina')?.value || '';
-  const koInput = document.getElementById('e-ko');
-  const datalist = document.getElementById('ko-datalist');
-  if (!datalist) return;
-
-  // Pre-fill defaultnu opštinu ako je korisnička default
-  const koList = KO_BY_OPSTINA[opstina] || [];
-  datalist.innerHTML = koList.map(ko => `<option value="${ko}">`).join('');
-
-  // Ako defaultna opština, postavi je
-  const prefs = getUserPrefs();
-  if (!opstina && prefs.defaultOpstina) {
-    if (document.getElementById('e-opstina')) {
-      document.getElementById('e-opstina').value = prefs.defaultOpstina;
-      filterKOByOpstina();
-    }
-  }
-}
-
-// =====================================================
-// PREDMET BR AUTO FORMAT
-// =====================================================
-function autoFormatPredmetBr(input) {
-  // samo normalizuje separatore; format zavisi od korisničkih podešavanja
-}
-
-function generateNextPredmetBr() {
-  const prefs = getUserPrefs();
-  const format = prefs.formatPredmeta || 'NNN/YYYY';
-  const year = new Date().getFullYear();
-  const month = String(new Date().getMonth() + 1).padStart(2, '0');
-  // Nađi max broj u ovoj godini
-  const existing = DB.evidence
-    .map(e => e.predmetBr || '')
-    .filter(b => b.includes(String(year)));
-  let maxN = 0;
-  existing.forEach(b => {
-    const m = b.match(/^(\d+)/);
-    if (m) maxN = Math.max(maxN, parseInt(m[1]));
-  });
-  const n = String(maxN + 1).padStart(3, '0');
-  if (format === 'NNN/YYYY') return `${n}/${year}`;
-  if (format === 'NNN/MM/YYYY') return `${n}/${month}/${year}`;
-  if (format === 'YYYY-NNN') return `${year}-${n}`;
-  return `${n}/${year}`;
-}
-
-// =====================================================
-// USER SETTINGS / PREFERENCES
-// =====================================================
-const USER_PREFS_KEY = 'wv_user_prefs';
-
-function getUserPrefs() {
-  try {
-    return JSON.parse(localStorage.getItem(USER_PREFS_KEY) || '{}');
-  } catch { return {}; }
-}
-
-function saveUserSettings() {
-  const prefs = {
-    ime: document.getElementById('us-ime').value.trim(),
-    prezime: document.getElementById('us-prezime').value.trim(),
-    firma: document.getElementById('us-firma').value.trim(),
-    licenca: document.getElementById('us-licenca').value.trim(),
-    defaultOpstina: document.getElementById('us-default-opstina').value,
-    formatPredmeta: document.getElementById('us-format-predmeta').value,
-    fiskalnaGod: document.getElementById('us-fiskalna-god').value,
-    potpis: document.getElementById('us-potpis').value.trim(),
-    stamp: getUserPrefs().stamp || null, // preserved from upload
-  };
-  localStorage.setItem(USER_PREFS_KEY, JSON.stringify(prefs));
-  applyUserPrefs();
-  closeModal('modal-user-settings');
-  toast('✓ Podešavanja sačuvana!', 'green');
-}
-
-function loadUserSettingsForm() {
-  const p = getUserPrefs();
-  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
-  set('us-ime', p.ime);
-  set('us-prezime', p.prezime);
-  set('us-firma', p.firma);
-  set('us-licenca', p.licenca);
-  set('us-default-opstina', p.defaultOpstina);
-  set('us-format-predmeta', p.formatPredmeta || 'NNN/YYYY');
-  set('us-fiskalna-god', p.fiskalnaGod || '1');
-  set('us-potpis', p.potpis);
-  // Stamp preview
-  if (p.stamp) {
-    const prev = document.getElementById('stamp-preview');
-    if (prev) {
-      prev.innerHTML = `<img src="${p.stamp}" alt="pečat">`;
-    }
-    const btnR = document.getElementById('btn-remove-stamp');
-    if (btnR) btnR.style.display = 'block';
-  }
-}
-
-function handleStampUpload(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const prefs = getUserPrefs();
-    prefs.stamp = e.target.result;
-    localStorage.setItem(USER_PREFS_KEY, JSON.stringify(prefs));
-    const prev = document.getElementById('stamp-preview');
-    if (prev) prev.innerHTML = `<img src="${e.target.result}" alt="pečat">`;
-    const btnR = document.getElementById('btn-remove-stamp');
-    if (btnR) btnR.style.display = 'block';
-    toast('✓ Pečat sačuvan!', 'green');
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
-}
-
-function removeStamp() {
-  const prefs = getUserPrefs();
-  delete prefs.stamp;
-  localStorage.setItem(USER_PREFS_KEY, JSON.stringify(prefs));
-  const prev = document.getElementById('stamp-preview');
-  if (prev) prev.innerHTML = '<span id="stamp-preview-placeholder">🔴</span>';
-  const btnR = document.getElementById('btn-remove-stamp');
-  if (btnR) btnR.style.display = 'none';
-}
-
-function applyUserPrefs() {
-  const p = getUserPrefs();
-  const fullName = [p.ime, p.prezime].filter(Boolean).join(' ') || '';
-  const firma = p.firma || '';
-  // Welcome banner
-  const wb = document.getElementById('dash-welcome-name');
-  if (wb) wb.textContent = fullName ? `Zdravo, ${p.ime || 'korisniče'}!` : 'Dobrodošli';
-  const wbs = document.getElementById('dash-welcome-sub');
-  if (wbs) wbs.textContent = firma || 'WorkVault · Upravljanje geodetskim radovima';
-  // Initials
-  const initEl = document.getElementById('dash-welcome-initials');
-  if (initEl) {
-    const init = ((p.ime||'?')[0] + (p.prezime||'?')[0]).toUpperCase();
-    initEl.textContent = init;
-  }
-  // Licence badge
-  const lb = document.getElementById('dash-licence-badge');
-  if (lb) lb.textContent = p.licenca ? `Licenca: ${p.licenca}` : '';
-  // Default opština u novom predmetu
-  const eOp = document.getElementById('e-opstina');
-  if (eOp && p.defaultOpstina && !eOp.value) {
-    eOp.value = p.defaultOpstina;
-    filterKOByOpstina();
-  }
-}
-
-// =====================================================
-// DASHBOARD RENDER
-// =====================================================
-function renderDashboard() {
-  const p = getUserPrefs();
-  const now = new Date();
-
-  // Today date
-  const todayEl = document.getElementById('dash-today-date');
-  if (todayEl) todayEl.textContent = now.toLocaleDateString('sr-Latn-ME', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-
-  // Saldo
-  const saldo = getRacunSaldo();
-  const saldoEl = document.getElementById('dash-saldo-val');
-  if (saldoEl) saldoEl.textContent = fmt(saldo);
-  const saldoSub = document.getElementById('dash-saldo-sub');
-  if (saldoSub) saldoSub.textContent = DB.racun.naziv || 'Bankovni račun';
-  const saldoCard = document.querySelector('.dash-saldo-card');
-  if (saldoCard) saldoCard.style.background = saldo < 0
-    ? 'linear-gradient(135deg,#dc2626,#ef4444)'
-    : 'linear-gradient(135deg,#1d4ed8,#2563eb)';
-
-  // Stats
-  const activePredmeti = DB.evidence.filter(e => (e.status||'active') === 'active').length;
-  const activeJobs = DB.jobs.filter(j => j.status === 'active').length;
-  const yearStr = String(now.getFullYear());
-  const yearIncome = DB.payments
-    .filter(p => p.type==='income' && (p.date||'').startsWith(yearStr))
-    .reduce((s,p) => s + (p.amount||0), 0);
-  const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
-  el('dash-active-predmeti', activePredmeti);
-  el('dash-active-jobs', activeJobs);
-  el('dash-year-income', fmt(yearIncome));
-
-  // Alerts — rokovi koji istječu u 7 dana
-  const alertsEl = document.getElementById('dash-alerts');
-  if (alertsEl) {
-    const expiring = DB.evidence.filter(e => isRokBlizu(e.rokDatum) && (e.status||'active') !== 'completed');
-    const overdue = DB.evidence.filter(e => {
-      if (!e.rokDatum || (e.status||'active') === 'completed') return false;
-      return new Date(e.rokDatum) < new Date();
-    });
-    let html = '';
-    if (overdue.length) html += `<div class="dash-alert dash-alert-red">🚨 <strong>${overdue.length} predmet${overdue.length===1?'':'a'}</strong> je prešlo rok! <button class="btn btn-outline btn-sm" style="margin-left:auto;border-color:var(--red);color:var(--red)" onclick="showPage('evidence')">Prikaži →</button></div>`;
-    if (expiring.length) html += `<div class="dash-alert dash-alert-warn">⚠️ <strong>${expiring.length} predmet${expiring.length===1?'':'a'}</strong> ističe u narednih 7 dana. <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="showPage('evidence')">Prikaži →</button></div>`;
-    alertsEl.innerHTML = html;
-  }
-
-  // Recent evidence
-  const recEl = document.getElementById('dash-recent-evidence');
-  if (recEl) {
-    const recent = [...DB.evidence].sort((a,b) => (b.id||0)-(a.id||0)).slice(0,5);
-    if (!recent.length) {
-      recEl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px">Nema predmeta.</div>';
-    } else {
-      recEl.innerHTML = recent.map(e => `
-        <div class="dash-recent-item">
-          <span class="dash-recent-icon">📋</span>
-          <span class="dash-recent-name">${e.prezime} ${e.ime} — KP ${e.parcela||'?'}</span>
-          <span class="dash-recent-meta">${e.predmetBr||''}</span>
-          <span class="predmet-status ${predmetStatusClass(e.status||'active')}" style="font-size:10px;padding:1px 6px">${predmetStatusLabel(e.status||'active')}</span>
-        </div>`).join('');
-    }
-  }
-
-  // Pending jobs
-  const pjEl = document.getElementById('dash-pending-jobs');
-  if (pjEl) {
-    const pending = DB.jobs.filter(j => j.status==='pending'||j.status==='active').slice(0,5);
-    if (!pending.length) {
-      pjEl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px">Nema aktivnih poslova.</div>';
-    } else {
-      pjEl.innerHTML = pending.map(j => `
-        <div class="dash-recent-item">
-          <span class="dash-recent-icon">🔧</span>
-          <span class="dash-recent-name">${j.name}</span>
-          <span class="dash-recent-meta">${j.client||''}</span>
-          <span class="badge ${pBadge[j.priority]||'badge-gray'}" style="font-size:10px">${pLabel[j.priority]||j.priority}</span>
-        </div>`).join('');
-    }
-  }
-
-  // Financial summary
-  const finEl = document.getElementById('dash-fin-summary');
-  if (finEl) {
-    const incRacun = DB.racun.transakcije
-      .filter(t => t.type==='uplata' && (t.date||'').startsWith(yearStr))
-      .reduce((s,t) => s+(t.amount||0), 0);
-    const expRacun = DB.racun.transakcije
-      .filter(t => t.type==='isplata' && (t.date||'').startsWith(yearStr))
-      .reduce((s,t) => s+(t.amount||0), 0);
-    const incPay = DB.payments
-      .filter(p => p.type==='income' && (p.date||'').startsWith(yearStr))
-      .reduce((s,p) => s+(p.amount||0), 0);
-    const expPay = DB.payments
-      .filter(p => p.type==='expense' && (p.date||'').startsWith(yearStr))
-      .reduce((s,p) => s+(p.amount||0), 0);
-    finEl.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:var(--accent-light);border-radius:8px;padding:10px 14px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:3px">Prihodi (Plaćanja)</div>
-          <div style="font-family:var(--serif);font-size:18px;font-weight:700;color:var(--accent)">${fmt(incPay)}</div>
-        </div>
-        <div style="background:var(--red-light);border-radius:8px;padding:10px 14px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:3px">Rashodi (Plaćanja)</div>
-          <div style="font-family:var(--serif);font-size:18px;font-weight:700;color:var(--red)">${fmt(expPay)}</div>
-        </div>
-        <div style="background:var(--blue-light);border-radius:8px;padding:10px 14px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:3px">Uplate (Račun)</div>
-          <div style="font-family:var(--serif);font-size:18px;font-weight:700;color:var(--blue)">${fmt(incRacun)}</div>
-        </div>
-        <div style="background:var(--amber-light);border-radius:8px;padding:10px 14px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:3px">Isplate (Račun)</div>
-          <div style="font-family:var(--serif);font-size:18px;font-weight:700;color:var(--amber)">${fmt(expRacun)}</div>
-        </div>
-      </div>
-      <div style="margin-top:10px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:12px">
-        <strong>Neto (plaćanja):</strong> <span style="color:${incPay-expPay>=0?'var(--accent)':'var(--red)'};font-weight:700">${fmt(incPay-expPay)}</span>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <strong>Neto (račun):</strong> <span style="color:${incRacun-expRacun>=0?'var(--accent)':'var(--red)'};font-weight:700">${fmt(incRacun-expRacun)}</span>
-      </div>`;
-  }
-
-  applyUserPrefs();
-}
-
-// =====================================================
-// RAČUN SALDO IZVJEŠTAJ (saldo svođenje)
-// =====================================================
-function renderRacunSaldoReport() {
-  // Adds a "Saldo svođenje" section to the racun page
-  const container = document.getElementById('racun-saldo-report');
-  if (!container) return;
-
-  const sorted = [...(DB.racun.transakcije||[])].sort((a,b) => (a.date||'').localeCompare(b.date||''));
-  const pocetni = DB.racun.pocetniSaldo || 0;
-  const year = new Date().getFullYear();
-  const yearStr = String(year);
-
-  // Group by month
-  const byMonth = {};
-  sorted.forEach(tx => {
-    const m = (tx.date||'').substring(0,7);
-    if (!m) return;
-    if (!byMonth[m]) byMonth[m] = { uplate:0, isplate:0, txs:[] };
-    if (tx.type === 'uplata') byMonth[m].uplate += tx.amount||0;
-    else byMonth[m].isplate += tx.amount||0;
-    byMonth[m].txs.push(tx);
-  });
-
-  let runSaldo = pocetni;
-  const monthKeys = Object.keys(byMonth).sort();
-
-  if (!monthKeys.length) {
-    container.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px">Nema transakcija.</div>';
-    return;
-  }
-
-  let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
-    <thead><tr style="background:var(--surface2)">
-      <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)">Period</th>
-      <th style="padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Uplate</th>
-      <th style="padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--red)">Isplate</th>
-      <th style="padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)">Saldo na kraju</th>
-    </tr></thead><tbody>`;
-
-  // Opening row
-  html += `<tr style="background:var(--amber-light)"><td style="padding:7px 12px;border-bottom:1px solid var(--border);font-weight:600;color:var(--amber)">Početni saldo</td>
-    <td colspan="2" style="border-bottom:1px solid var(--border)"></td>
-    <td style="padding:7px 12px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:var(--amber)">${fmt(pocetni)}</td></tr>`;
-
-  monthKeys.forEach(m => {
-    const d = byMonth[m];
-    const prevSaldo = runSaldo;
-    runSaldo = runSaldo + d.uplate - d.isplate;
-    const [yr, mo] = m.split('-');
-    const monthName = MONTHS[parseInt(mo)-1] + ' ' + yr;
-    const isCurrentMonth = m === new Date().toISOString().substring(0,7);
-    html += `<tr${isCurrentMonth?' style="background:rgba(45,106,79,.05)"':''}>
-      <td style="padding:7px 12px;border-bottom:1px solid var(--border);font-weight:${isCurrentMonth?700:400}">${monthName}</td>
-      <td style="padding:7px 12px;border-bottom:1px solid var(--border);text-align:right;color:var(--accent);font-weight:500">${fmt(d.uplate)}</td>
-      <td style="padding:7px 12px;border-bottom:1px solid var(--border);text-align:right;color:var(--red)">${d.isplate?fmt(d.isplate):'—'}</td>
-      <td style="padding:7px 12px;border-bottom:1px solid var(--border);text-align:right;font-weight:700;color:${runSaldo<0?'var(--red)':'var(--text)'}">${fmt(runSaldo)}</td>
-    </tr>`;
-  });
-
-  html += `<tr style="background:var(--surface2);font-weight:700">
-    <td style="padding:9px 12px;color:var(--text2)">TRENUTNI SALDO</td>
-    <td colspan="2" style="padding:9px 12px"></td>
-    <td style="padding:9px 12px;text-align:right;font-family:var(--serif);font-size:16px;color:${runSaldo<0?'var(--red)':'var(--accent)'}">${fmt(runSaldo)}</td>
-  </tr></tbody></table></div>`;
-
-  container.innerHTML = html;
-}
-
-// =====================================================
-// EXTEND showPage for dashboard & settings modal patch
-// =====================================================
-// Patch openModal to load settings form
-const _origOpenModal = openModal;
-// (we can't override easily so we patch modal-user-settings open)
-
-// =====================================================
-// PATCH editEvidence to handle select for opstina
-// =====================================================
-const _origEditEvidence = editEvidence;
-function editEvidence(id) {
-  _origEditEvidence(id);
-  // Fix opstina select (original sets .value on text input; now it's a select)
-  const e = DB.evidence.find(x => x.id === id);
-  if (!e) return;
-  const opEl = document.getElementById('e-opstina');
-  if (opEl && opEl.tagName === 'SELECT') {
-    opEl.value = e.opstina || '';
-    filterKOByOpstina();
-  }
-}
-
-
-// ── Ortofoto screenshot (calls local ekatastar.py server) ──────────────────
-async function ekOrtofoto() {
-  const ko = (document.getElementById('ek-ko') || {}).value || '';
-  const parcela = (document.getElementById('ek-parcela') || {}).value || '';
-  if (!ko.trim() || !parcela.trim()) { toast('Unesite KO i broj parcele za ortofoto', 'red'); return; }
-  if (!ekServerAvailable) { toast('Lokalni server nije pokrenut', 'red'); return; }
-  const btn = document.getElementById('btn-ek-ortofoto');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Snimam...'; }
-  showLoading('Pravim ortofoto screenshot parcele...');
-  try {
-    const r = await fetch(EK_SERVER + '/ortofoto', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ko: ko.trim(), parcela: parcela.trim(), headless: true }),
-      signal: AbortSignal.timeout(60000)
-    });
-    const d = await r.json();
-    hideLoading();
-    if (d.ok && d.image_b64) {
-      const dataUrl = 'data:image/png;base64,' + d.image_b64;
-      const w = window.open();
-      if (w) {
-        w.document.write(`<html><head><title>Ortofoto — KP ${parcela} (${ko})</title>
-          <style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:sans-serif}</style></head>
-          <body>
-            <div style="color:#ccc;padding:12px 0;font-size:13px">
-              KP <strong style="color:white">${parcela}</strong> · KO <strong style="color:white">${ko}</strong>
-              &nbsp;·&nbsp;
-              <a href="${dataUrl}" download="ortofoto_${ko.replace(/ /g,'_')}_${parcela.replace('/','_')}.png"
-                style="color:#81d4fa;text-decoration:none">⬇ Preuzmi PNG</a>
-            </div>
-            <img src="${dataUrl}" style="max-width:100%;max-height:85vh;border:2px solid #333;border-radius:4px">
-          </body></html>`);
-      }
-      toast('✓ Ortofoto screenshot napravljen!', 'green');
-    } else {
-      toast('Greška: ' + (d.error || 'Nepoznata greška'), 'red');
-    }
-  } catch (e) {
-    hideLoading();
-    toast('Greška: ' + (e.name === 'TimeoutError' ? 'Timeout — screenshot traje predugo' : e.message), 'red');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🛰 Ortofoto'; }
-  }
-}
-
+// Auto-provjera kada se modal otvori
 (function() {
   function patchModal() {
     const overlay = document.getElementById('modal-ekatastar');
