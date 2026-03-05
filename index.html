@@ -1825,6 +1825,9 @@ function renderEvidence(){
       <td><div class="td-actions">
         <button class="btn-card" onclick="showCard(${e.id})">Kartica</button>
         <button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button>
+        <button class="btn-card" onclick="openEKatastar(${e.id})" style="color:#BB0009;border-color:#BB0009">🏛 eK</button>
+        <button class="btn-card" onclick="preuzmiOrtofoto(${e.id})" style="color:#1565c0;border-color:#1565c0">🛰 OF</button>
+        <button class="btn-card" onclick="preuzmiDXF(${e.id})" style="color:#2e7d32;border-color:#2e7d32">📐 DXF</button>
         <button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button>
         <button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button>
       </div></td>
