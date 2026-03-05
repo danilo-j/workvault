@@ -3060,7 +3060,7 @@ async function _downloadOrtofotoForData(ko, parcela) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ko, parcela, headless: true }),
-    signal: AbortSignal.timeout(120000)
+    signal: AbortSignal.timeout(180000)
   });
   const data = await r.json();
   if (!data.ok) throw new Error(data.error || 'Greška servera');
@@ -3382,13 +3382,33 @@ async function ekFetchData() {
     if (!parcelaBr) {
       toast('⚠ DXF/Ortofoto: nema broja parcele', 'red');
     } else {
-      // DXF: GET /dxf → server (ezdxf) vraća fajl direktno
-      const dxfUrl = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcelaBr)}`;
-      const a = document.createElement('a');
-      a.href = dxfUrl; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      toast('✓ DXF download pokrenut', 'green');
+      // DXF: fetch kao blob da možemo await-ovati i sekvencirati sa ortofotom
+      showLoading('Generišem DXF...');
+      try {
+        const dxfResp = await fetch(
+          `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcelaBr)}`,
+          { signal: AbortSignal.timeout(120000) }
+        );
+        if (!dxfResp.ok) {
+          const err = await dxfResp.json().catch(() => ({}));
+          throw new Error(err.error || dxfResp.statusText);
+        }
+        const dxfBlob = await dxfResp.blob();
+        const safe    = (ko + '_' + parcelaBr).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const dxfUrl  = URL.createObjectURL(dxfBlob);
+        const a = document.createElement('a');
+        a.href = dxfUrl;
+        a.download = `KP_${safe}.dxf`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(dxfUrl), 3000);
+        toast('✓ DXF preuzet', 'green');
+      } catch(e) {
+        toast('DXF greška: ' + e.message, 'red');
+      } finally {
+        hideLoading();
+      }
 
-      // Ortofoto: POST /ortofoto
+      // Ortofoto: tek nakon što DXF završi
       showLoading('Preuzimam ortofoto...');
       try {
         await _downloadOrtofotoForData(ko, parcelaBr);
