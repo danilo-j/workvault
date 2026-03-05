@@ -1912,7 +1912,6 @@ function toggleClientGroup(id) {
   const el = document.getElementById(id);
   if(el) el.classList.toggle('collapsed');
 }
-}
 function renderAtt(rid,field,files){
   if(!files||!files.length)return'<span style="color:var(--text4);font-size:12px">—</span>';
   return`<div class="att-chips">${files.map((f,i)=>`<span class="att-chip" onclick="openAttachment(${rid},'${field}',${i})" title="${f.name}">${fileIcon(f.type)} ${f.name.length>10?f.name.substring(0,8)+'…':f.name}</span>`).join('')}</div>`;
