@@ -3057,27 +3057,25 @@ async function _downloadDXFForData(ko, parcela) {
 // Interna ortofoto funkcija
 async function _downloadOrtofotoForData(ko, parcela) {
   const r = await fetch(EK_SERVER + '/ortofoto', {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ko, parcela, headless: true }),
-    signal: AbortSignal.timeout(180000)
+    body:    JSON.stringify({ ko, parcela }),
+    signal:  AbortSignal.timeout(180000)
   });
   const data = await r.json();
   if (!data.ok) throw new Error(data.error || 'Greška servera');
 
   const safe = (ko + '_' + parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
-  const fname = `ortofoto_${safe}.png`;
-  const byteChars = atob(data.image_b64);
-  const byteArr = new Uint8Array(byteChars.length);
-  for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-  const blob = new Blob([byteArr], { type: 'image/png' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = fname;
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  toast(`✓ Ortofoto preuzet: ${fname}`, 'green');
+
+  // PNG
+  _ekDownloadB64(data.image_b64, `ortofoto_${safe}.png`, 'image/png');
+  toast(`✓ Ortofoto preuzet`, 'green');
+
+  // DXF — ako ga server vratio uz isti request
+  if (data.dxf_b64 && data.dxf_name) {
+    _ekDownloadB64(data.dxf_b64, data.dxf_name, 'application/dxf');
+    toast(`✓ DXF preuzet: ${data.dxf_name}`, 'green');
+  }
 }
 
 async function downloadSpisak() {
@@ -3382,38 +3380,12 @@ async function ekFetchData() {
     if (!parcelaBr) {
       toast('⚠ DXF/Ortofoto: nema broja parcele', 'red');
     } else {
-      // DXF: fetch kao blob da možemo await-ovati i sekvencirati sa ortofotom
-      showLoading('Generišem DXF...');
-      try {
-        const dxfResp = await fetch(
-          `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcelaBr)}`,
-          { signal: AbortSignal.timeout(120000) }
-        );
-        if (!dxfResp.ok) {
-          const err = await dxfResp.json().catch(() => ({}));
-          throw new Error(err.error || dxfResp.statusText);
-        }
-        const dxfBlob = await dxfResp.blob();
-        const safe    = (ko + '_' + parcelaBr).replace(/[^a-zA-Z0-9_-]/g, '_');
-        const dxfUrl  = URL.createObjectURL(dxfBlob);
-        const a = document.createElement('a');
-        a.href = dxfUrl;
-        a.download = `KP_${safe}.dxf`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(dxfUrl), 3000);
-        toast('✓ DXF preuzet', 'green');
-      } catch(e) {
-        toast('DXF greška: ' + e.message, 'red');
-      } finally {
-        hideLoading();
-      }
-
-      // Ortofoto: tek nakon što DXF završi
-      showLoading('Preuzimam ortofoto...');
+      // Jedan request → server vraća i PNG i DXF (GeoJSON se fetcha jednom)
+      showLoading('Generišem ortofoto i DXF...');
       try {
         await _downloadOrtofotoForData(ko, parcelaBr);
       } catch(e) {
-        toast('Ortofoto greška: ' + e.message, 'red');
+        toast('Geo greška: ' + e.message, 'red');
       } finally {
         hideLoading();
       }
