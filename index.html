@@ -1011,7 +1011,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
         </label>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:500;letter-spacing:0">
           <input type="checkbox" id="ek-opt-dxf" style="width:auto;margin:0;width:16px;height:16px;cursor:pointer">
-          <span>📐 Preuzmi DXF (GK koordinate)</span>
+          <span>📐 Preuzmi DXF <span style="font-weight:400;color:var(--text3)">(auto GK6/GK7 · Bessel · Helmert)</span></span>
           <span id="ek-dxf-status" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
         </label>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:500;letter-spacing:0">
@@ -1849,8 +1849,6 @@ function renderEvidence(){
         <button class="btn-card" onclick="showCard(${e.id})">Kartica</button>
         <button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button>
         <button class="btn-card" onclick="openEKatastar(${e.id})" style="color:#BB0009;border-color:#BB0009">🏛 eK</button>
-        <button class="btn-card" onclick="preuzmiOrtofoto(${e.id})" style="color:#1565c0;border-color:#1565c0">🛰 OF</button>
-        <button class="btn-card" onclick="preuzmiDXF(${e.id})" style="color:#2e7d32;border-color:#2e7d32">📐 DXF</button>
         <button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button>
         <button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button>
       </div></td>
@@ -1896,8 +1894,6 @@ function renderEvidenceGrid(d) {
             <button class="predmet-action-btn" onclick="showCard(${e.id})" title="Kartica">👤</button>
             <button class="predmet-action-btn" onclick="openElaborat(${e.id})" title="Elaborat">📄</button>
             <button class="predmet-action-btn" onclick="openEKatastar(${e.id})" title="eKatastar" style="color:#BB0009">🏛</button>
-            <button class="predmet-action-btn" onclick="preuzmiOrtofoto(${e.id})" title="Ortofoto" style="color:#1565c0">🛰</button>
-            <button class="predmet-action-btn" onclick="preuzmiDXF(${e.id})" title="DXF (GK)" style="color:#2e7d32">📐</button>
             <button class="predmet-action-btn" onclick="editEvidence(${e.id})" title="Izmijeni">✏</button>
             <button class="predmet-action-btn" onclick="del('evidence',${e.id})" title="Obriši" style="color:var(--red)">🗑</button>
           </div>
@@ -3030,43 +3026,30 @@ async function ekImportConfirm() {
 
 // Interna DXF funkcija (bez event.target)
 async function _downloadDXFForData(ko, parcela) {
+  // Python server vraca koordinate vec transformisane u GK6/GK7
+  // (UTM34N → Bessel → Gauss-Kruger, EPSG:32634 → proj4 string)
   const r = await fetch(EK_SERVER + '/geojson', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ko, parcela }),
-    signal: AbortSignal.timeout(30000)
+    signal: AbortSignal.timeout(60000)
   });
   const data = await r.json();
   if (!data.ok) throw new Error(data.error || 'Greška servera');
-  const geojson = data.geojson;
-  if (!geojson.features || !geojson.features.length) throw new Error('Parcela nije pronađena');
 
-  const polygons = [];
-  let zone = 7;
-  geojson.features.forEach(feat => {
-    const geom = feat.geometry;
-    if (!geom) return;
-    const processRing = (ring) => {
-      const { points, zone: z } = transformCoords(ring);
-      zone = z; return points;
-    };
-    if (geom.type === 'Polygon') {
-      polygons.push({ points: processRing(geom.coordinates[0]), label: `KP ${parcela}` });
-    } else if (geom.type === 'MultiPolygon') {
-      geom.coordinates.forEach((poly, i) => {
-        polygons.push({ points: processRing(poly[0]), label: `KP ${parcela}${i > 0 ? ' (' + (i+1) + ')' : ''}` });
-      });
-    }
-  });
-  if (!polygons.length) throw new Error('Nema poligona u geometriji');
+  const polygons = data.polygons;   // [{points:[[x,y],...], label:'KP 503'}, ...]
+  const zone     = data.zone;       // 6 ili 7
+
+  if (!polygons || !polygons.length) throw new Error('Nema poligona u geometriji');
 
   const layerName = `KP_${parcela}_KO_${ko}`.replace(/[^a-zA-Z0-9_]/g, '_');
-  const dxf = buildDXF(polygons, layerName);
+  const dxf  = buildDXF(polygons, layerName);
   const safe = (ko + '_' + parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
   const fname = `KP_${safe}_GK${zone}.dxf`;
+
   const blob = new Blob([dxf], { type: 'application/dxf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   a.href = url; a.download = fname;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
