@@ -961,12 +961,8 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
             📋 Excel (Spisak prijava)
           </label>
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:#1b5e20;font-weight:500">
-            <input type="checkbox" id="ek-want-dxf" style="width:15px;height:15px;cursor:pointer;margin:0">
-            📐 DXF (GK6/GK7)
-          </label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:#1b5e20;font-weight:500">
-            <input type="checkbox" id="ek-want-ortofoto" style="width:15px;height:15px;cursor:pointer;margin:0">
-            🛰 Ortofoto (.png)
+            <input type="checkbox" id="ek-want-geo" style="width:15px;height:15px;cursor:pointer;margin:0">
+            📐🛰 DXF + Ortofoto
           </label>
         </div>
       </div>
@@ -2833,32 +2829,41 @@ const OPSTINA_KO = {
 // Populiše KO select zavisno od odabrane opstine
 function ekPopulateKO(prefillValue) {
   const opstina = document.getElementById('ek-opstina').value;
-  const koSel   = document.getElementById('ek-ko');
   const koList  = OPSTINA_KO[opstina] || [];
 
-  koSel.innerHTML = '';
+  // Uvijek vraćamo na select (poništi eventualni input iz prethodnog poziva)
+  let koEl = document.getElementById('ek-ko');
+  if (koEl && koEl.tagName !== 'SELECT') {
+    const sel = document.createElement('select');
+    sel.id = 'ek-ko';
+    koEl.replaceWith(sel);
+    koEl = sel;
+  }
+
+  koEl.innerHTML = '';
 
   if (!opstina) {
-    koSel.innerHTML = '<option value="">— prvo odaberite opštinu —</option>';
+    koEl.innerHTML = '<option value="">— prvo odaberite opštinu —</option>';
     return;
   }
 
   if (koList.length) {
-    // Poznate KO — prikaži dropdown
-    koSel.add(new Option('— odaberite KO —', ''));
-    koList.forEach(ko => koSel.add(new Option(ko, ko)));
-    if (prefillValue) koSel.value = prefillValue;
+    koEl.innerHTML = '<option value="">— odaberite KO —</option>';
+    koList.forEach(ko => {
+      const opt = document.createElement('option');
+      opt.value = ko; opt.textContent = ko;
+      koEl.appendChild(opt);
+    });
+    if (prefillValue) koEl.value = prefillValue;
   } else {
-    // Nepoznate KO — slobodan unos
-    koSel.innerHTML = '';
-    // Zamijeni select privremenim text inputom
+    // Opstina bez unaprijed poznatih KO — zamijeni select slobodnim unosom
     const input = document.createElement('input');
     input.type        = 'text';
     input.id          = 'ek-ko';
     input.placeholder = 'Unesite naziv KO';
     input.value       = prefillValue || '';
-    input.style.cssText = koSel.style.cssText;
-    koSel.replaceWith(input);
+    input.className   = koEl.className;
+    koEl.replaceWith(input);
   }
 }
 
@@ -3317,11 +3322,10 @@ async function ekFetchData() {
   if (!ekServerAvailable)        { toast('Lokalni server nije pokrenut', 'red');      return; }
   if (!ekServerConfigured)       { toast('Postavi kredencijale prvo', 'red');         return; }
 
-  const wantExcel    = document.getElementById('ek-want-excel')?.checked    ?? true;
-  const wantDxf      = document.getElementById('ek-want-dxf')?.checked      ?? false;
-  const wantOrtofoto = document.getElementById('ek-want-ortofoto')?.checked ?? false;
+  const wantExcel = document.getElementById('ek-want-excel')?.checked ?? true;
+  const wantGeo   = document.getElementById('ek-want-geo')?.checked   ?? false;
 
-  if (!wantExcel && !wantDxf && !wantOrtofoto) {
+  if (!wantExcel && !wantGeo) {
     toast('Odaberi barem jednu opciju', 'red'); return;
   }
 
@@ -3366,32 +3370,29 @@ async function ekFetchData() {
   }
 
   // ── PROCES 2: DXF + Ortofoto (geo pipeline, dijele bearer token) ──────────
-  // Pokreće se samo ako je DXF ili Ortofoto čekiran — bez Selenuma
-  if (wantDxf || wantOrtofoto) {
+  // Pokreće se samo ako je geo čekiran — bez Selenuma
+  if (wantGeo) {
     const parcelaBr = parcela || fetchedData?.parcele?.[0]?.broj || '';
     if (!parcelaBr) {
       toast('⚠ DXF/Ortofoto: nema broja parcele', 'red');
     } else {
-      if (wantDxf) {
-        // GET /dxf — server dohvata token + GeoJSON + ezdxf, vraća fajl direktno
-        const dxfUrl = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcelaBr)}`;
-        const a = document.createElement('a');
-        a.href = dxfUrl;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        downloaded.push('📐 DXF');
-        toast('✓ DXF download pokrenut', 'green');
-      }
+      // DXF — GET /dxf, server radi token+GeoJSON+ezdxf
+      const dxfUrl = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcelaBr)}`;
+      const a = document.createElement('a');
+      a.href = dxfUrl;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      downloaded.push('📐 DXF');
+      toast('✓ DXF download pokrenut', 'green');
 
-      if (wantOrtofoto) {
-        showLoading('Preuzimam ortofoto...');
-        try {
-          await _downloadOrtofotoForData(ko, parcelaBr);
-          downloaded.push('🛰 Ortofoto');
-        } catch(e) {
-          toast('Ortofoto greška: ' + e.message, 'red');
-        } finally {
-          hideLoading();
-        }
+      // Ortofoto — isti token se koristi interno na serveru
+      showLoading('Preuzimam ortofoto...');
+      try {
+        await _downloadOrtofotoForData(ko, parcelaBr);
+        downloaded.push('🛰 Ortofoto');
+      } catch(e) {
+        toast('Ortofoto greška: ' + e.message, 'red');
+      } finally {
+        hideLoading();
       }
     }
   }
