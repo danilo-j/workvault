@@ -1827,7 +1827,6 @@ function renderEvidence(){
       <td><div class="td-actions">
         <button class="btn-card" onclick="showCard(${e.id})">Kartica</button>
         <button class="btn-card" onclick="openElaborat(${e.id})" style="color:var(--blue);border-color:var(--blue)">📄 Elaborat</button>
-        <button class="btn-card" onclick="openEKatastar(${e.id})" style="color:#BB0009;border-color:#BB0009">🏛 eK</button>
         <button class="btn-edit" onclick="editEvidence(${e.id})">Izmijeni</button>
         <button class="btn-del" onclick="del('evidence',${e.id})">Obriši</button>
       </div></td>
@@ -1872,7 +1871,8 @@ function renderEvidenceGrid(d) {
           <div class="predmet-actions">
             <button class="predmet-action-btn" onclick="showCard(${e.id})" title="Kartica">👤</button>
             <button class="predmet-action-btn" onclick="openElaborat(${e.id})" title="Elaborat">📄</button>
-            <button class="predmet-action-btn" onclick="openEKatastar(${e.id})" title="eKatastar" style="color:#BB0009">🏛</button>
+            <button class="predmet-action-btn" onclick="preuzmiOrtofoto(${e.id})" title="Ortofoto" style="color:#1565c0">🛰</button>
+            <button class="predmet-action-btn" onclick="preuzmiDXF(${e.id})" title="DXF (GK)" style="color:#2e7d32">📐</button>
             <button class="predmet-action-btn" onclick="editEvidence(${e.id})" title="Izmijeni">✏</button>
             <button class="predmet-action-btn" onclick="del('evidence',${e.id})" title="Obriši" style="color:var(--red)">🗑</button>
           </div>
@@ -3231,6 +3231,382 @@ async function ekFetchData() {
     patchModal();
   }
 })();
+
+
+// =============================================================================
+// ORTOFOTO + DXF EXPORT
+// =============================================================================
+
+// ── Ortofoto ──────────────────────────────────────────────────────────────────
+async function preuzmiOrtofoto(evId) {
+  const ev = DB.evidence.find(e => e.id === evId);
+  if (!ev) return;
+  if (!ev.parcela || !ev.ko) { toast('Parcela ili KO nisu uneseni', 'red'); return; }
+  if (!ekServerAvailable) { toast('Lokalni server nije pokrenut', 'red'); return; }
+
+  toast('🛰 Generišem ortofoto...', 'blue');
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+
+  try {
+    const r = await fetch(EK_SERVER + '/ortofoto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ko: ev.ko, parcela: ev.parcela, headless: true }),
+      signal: AbortSignal.timeout(120000)
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'Greška servera');
+
+    // Otvori sliku u novom tabu + link za download
+    const win = window.open('', '_blank');
+    const safe = (ev.ko + '_' + ev.parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
+    win.document.write(`<!DOCTYPE html><html><head><title>Ortofoto ${ev.parcela} ${ev.ko}</title></head>
+      <body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center">
+        <div style="padding:10px;background:#222;width:100%;display:flex;gap:10px;align-items:center">
+          <span style="color:#fff;font-size:13px">KP ${ev.parcela} · KO ${ev.ko}</span>
+          <a href="data:image/png;base64,${data.image_b64}"
+             download="ortofoto_${safe}.png"
+             style="background:#1565c0;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-size:12px">⬇ Preuzmi PNG</a>
+        </div>
+        <img src="data:image/png;base64,${data.image_b64}" style="max-width:100%;height:auto">
+      </body></html>`);
+    win.document.close();
+    toast('✓ Ortofoto spreman', 'green');
+  } catch (err) {
+    toast('Ortofoto greška: ' + err.message, 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🛰';
+  }
+}
+
+// =============================================================================
+// DXF EXPORT — GeoJSON UTM34N → GK6/GK7 → DXF
+// =============================================================================
+
+// ── UTM34N → GK6 ili GK7 transformacija ──────────────────────────────────────
+// Oba sistema koriste Bessel ellipsoid + Helmert 7-param transform
+// Parametri: towgs84=262.089,234.687,753.224,4.85806,14.5378,-15.79343,-0.0535399999890274
+
+function utm34nToGK(easting, northing) {
+  // Korak 1: UTM34N (EPSG:32634, WGS84) → WGS84 geografske
+  const wgs = utm34nToWGS84(easting, northing);
+
+  // Korak 2: WGS84 → Bessel 1841 (Helmert 7-param, inverzno)
+  const bessel = wgs84ToBessel(wgs.lon, wgs.lat, 0);
+
+  // Korak 3: Bessel geografske → GK6 ili GK7 (centralni meridijan 18° ili 21°)
+  const lon = bessel.lon;
+  const gkZone = (lon >= 19.5) ? 7 : 6;
+  const cm = (gkZone === 7) ? 21.0 : 18.0;
+  const falseE = (gkZone === 7) ? 7500000 : 6500000;
+
+  const gk = besselToGK(bessel.lon, bessel.lat, cm, falseE);
+  return { x: gk.x, y: gk.y, zone: gkZone };
+}
+
+function utm34nToWGS84(E, N) {
+  // WGS84 ellipsoid
+  const a = 6378137.0, f = 1/298.257223563;
+  const b = a*(1-f), e2 = 1-(b/a)**2;
+  const e1 = (1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+  const lon0 = 21.0 * Math.PI/180;
+  const k0 = 0.9996;
+  const x = E - 500000, y = N;
+  const M = y/k0;
+  const mu = M/(a*(1-e2/4-3*e2**2/64-5*e2**3/256));
+  const phi1 = mu
+    + (3*e1/2-27*e1**3/32)*Math.sin(2*mu)
+    + (21*e1**2/16-55*e1**4/32)*Math.sin(4*mu)
+    + (151*e1**3/96)*Math.sin(6*mu)
+    + (1097*e1**4/512)*Math.sin(8*mu);
+  const N1 = a/Math.sqrt(1-e2*Math.sin(phi1)**2);
+  const T1 = Math.tan(phi1)**2;
+  const C1 = e2/(1-e2)*Math.cos(phi1)**2;
+  const R1 = a*(1-e2)/(1-e2*Math.sin(phi1)**2)**1.5;
+  const D = x/(N1*k0);
+  const lat = phi1 - (N1*Math.tan(phi1)/R1)*(
+    D**2/2
+    -(5+3*T1+10*C1-4*C1**2-9*(e2/(1-e2)))*D**4/24
+    +(61+90*T1+298*C1+45*T1**2-252*(e2/(1-e2))-3*C1**2)*D**6/720
+  );
+  const lon = lon0 + (
+    D-(1+2*T1+C1)*D**3/6
+    +(5-2*C1+28*T1-3*C1**2+8*(e2/(1-e2))+24*T1**2)*D**5/120
+  )/Math.cos(phi1);
+  return { lon: lon*180/Math.PI, lat: lat*180/Math.PI };
+}
+
+function wgs84ToBessel(lon, lat, h) {
+  // WGS84 → Bessel 1841 Helmert 7-param (inverzni smjer — oduzimamo parametre)
+  // towgs84=262.089,234.687,753.224,4.85806,14.5378,-15.79343,-0.0535399999890274
+  // Parametri su WGS84→Bessel kad se primijene inverzno
+  const dx=-262.089, dy=-234.687, dz=-753.224;
+  const rx=-4.85806*Math.PI/(180*3600);
+  const ry=-14.5378*Math.PI/(180*3600);
+  const rz=15.79343*Math.PI/(180*3600);
+  const ds=0.0535399999890274/1e6;
+
+  // WGS84 elipsoid → kartezijski
+  const aW=6378137.0, fW=1/298.257223563, eW2=2*fW-fW**2;
+  const latR=lat*Math.PI/180, lonR=lon*Math.PI/180;
+  const NW=aW/Math.sqrt(1-eW2*Math.sin(latR)**2);
+  const X=(NW+h)*Math.cos(latR)*Math.cos(lonR);
+  const Y=(NW+h)*Math.cos(latR)*Math.sin(lonR);
+  const Z=(NW*(1-eW2)+h)*Math.sin(latR);
+
+  // Helmert transform (7-param)
+  const s=1+ds;
+  const X2=dx+s*(X+rz*Y-ry*Z);
+  const Y2=dy+s*(-rz*X+Y+rx*Z);
+  const Z2=dz+s*(ry*X-rx*Y+Z);
+
+  // Kartezijski → Bessel geografske
+  const aB=6377397.155, fB=1/299.1528128, eB2=2*fB-fB**2;
+  const p=Math.sqrt(X2**2+Y2**2);
+  const theta=Math.atan2(Z2*aB, p*(aB*Math.sqrt(1-eB2)));
+  const latB=Math.atan2(
+    Z2+eB2/(1-eB2)*aB*Math.sin(theta)**3,
+    p-eB2*aB*Math.cos(theta)**3
+  );
+  const lonB=Math.atan2(Y2,X2);
+  return { lon: lonB*180/Math.PI, lat: latB*180/Math.PI };
+}
+
+function besselToGK(lon, lat, cm, falseE) {
+  // Bessel 1841 → Gauss-Krüger transversal Mercator
+  const a=6377397.155, f=1/299.1528128, b=a*(1-f), e2=1-(b/a)**2;
+  const k0=0.9999;
+  const phi=lat*Math.PI/180;
+  const lam=lon*Math.PI/180;
+  const lam0=cm*Math.PI/180;
+  const dl=lam-lam0;
+  const N=a/Math.sqrt(1-e2*Math.sin(phi)**2);
+  const T=Math.tan(phi)**2;
+  const C=(e2/(1-e2))*Math.cos(phi)**2;
+  const A=Math.cos(phi)*dl;
+  const e4=e2**2, e6=e2**3;
+  const M=a*((1-e2/4-3*e4/64-5*e6/256)*phi
+    -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
+    +(15*e4/256+45*e6/1024)*Math.sin(4*phi)
+    -(35*e6/3072)*Math.sin(6*phi));
+  const x=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T**2+72*C-58*(e2/(1-e2)))*A**5/120)+falseE;
+  const y=k0*(M+N*Math.tan(phi)*(A**2/2+(5-T+9*C+4*C**2)*A**4/24+(61-58*T+T**2+600*C-330*(e2/(1-e2)))*A**6/720));
+  return { x, y };
+}
+
+// ── GeoJSON koordinate transform ───────────────────────────────────────────────
+function transformCoords(coords) {
+  // coords su [[e,n], ...] u UTM34N
+  // Vrati { points: [[x,y],...], zone: 6|7 }
+  let zone = 7;
+  const pts = coords.map(([e, n]) => {
+    const gk = utm34nToGK(e, n);
+    zone = gk.zone;
+    return [gk.x, gk.y];
+  });
+  return { points: pts, zone };
+}
+
+// ── DXF generator ─────────────────────────────────────────────────────────────
+function buildDXF(polygons, layerName) {
+  // polygons: array of { points: [[x,y],...], label: string }
+  // Vraća DXF string sa LWPOLYLINE entitetima
+
+  const lines = [];
+
+  // HEADER
+  lines.push('0
+SECTION
+2
+HEADER');
+  lines.push('9
+$ACADVER
+1
+AC1015');
+  lines.push('9
+$INSUNITS
+70
+6'); // 6 = metri
+  lines.push('0
+ENDSEC');
+
+  // TABLES
+  lines.push('0
+SECTION
+2
+TABLES');
+  lines.push('0
+TABLE
+2
+LAYER
+70
+2');
+  lines.push(`0
+LAYER
+2
+${layerName}
+70
+0
+62
+3
+6
+CONTINUOUS`);
+  lines.push('0
+LAYER
+2
+LABELS
+70
+0
+62
+7
+6
+CONTINUOUS');
+  lines.push('0
+ENDTAB
+0
+ENDSEC');
+
+  // ENTITIES
+  lines.push('0
+SECTION
+2
+ENTITIES');
+
+  polygons.forEach(({ points, label }) => {
+    // LWPOLYLINE
+    lines.push('0
+LWPOLYLINE');
+    lines.push(`8
+${layerName}`);    // layer
+    lines.push('70
+1');              // closed
+    lines.push(`90
+${points.length}`);
+    points.forEach(([x, y]) => {
+      lines.push(`10
+${x.toFixed(3)}`);
+      lines.push(`20
+${y.toFixed(3)}`);
+    });
+
+    // TEXT label (centroid)
+    if (label) {
+      const cx = points.reduce((s,[x])=>s+x,0)/points.length;
+      const cy = points.reduce((s,[,y])=>s+y,0)/points.length;
+      lines.push('0
+TEXT');
+      lines.push('8
+LABELS');
+      lines.push(`10
+${cx.toFixed(3)}`);
+      lines.push(`20
+${cy.toFixed(3)}`);
+      lines.push('30
+0.0');
+      lines.push('40
+2.0');   // visina teksta 2m
+      lines.push(`1
+${label}`);
+      lines.push('72
+1');     // horizontalno centriranje
+    }
+  });
+
+  lines.push('0
+ENDSEC
+0
+EOF');
+  return lines.join('
+');
+}
+
+// ── Glavni DXF export ──────────────────────────────────────────────────────────
+async function preuzmiDXF(evId) {
+  const ev = DB.evidence.find(e => e.id === evId);
+  if (!ev) return;
+  if (!ev.parcela || !ev.ko) { toast('Parcela ili KO nisu uneseni', 'red'); return; }
+  if (!ekServerAvailable) { toast('Lokalni server nije pokrenut', 'red'); return; }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  toast('📐 Dohvatam geometriju...', 'blue');
+
+  try {
+    // 1. Dohvati GeoJSON sa servera
+    const r = await fetch(EK_SERVER + '/geojson', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ko: ev.ko, parcela: ev.parcela }),
+      signal: AbortSignal.timeout(30000)
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'Greška servera');
+
+    const geojson = data.geojson;
+    if (!geojson.features || !geojson.features.length)
+      throw new Error('Parcela nije pronađena');
+
+    // 2. Transformiši koordinate UTM34N → GK
+    const polygons = [];
+    let zone = 7;
+
+    geojson.features.forEach(feat => {
+      const geom = feat.geometry;
+      if (!geom) return;
+
+      const processRing = (ring) => {
+        const { points, zone: z } = transformCoords(ring);
+        zone = z;
+        return points;
+      };
+
+      if (geom.type === 'Polygon') {
+        polygons.push({
+          points: processRing(geom.coordinates[0]),
+          label: `KP ${ev.parcela}`
+        });
+      } else if (geom.type === 'MultiPolygon') {
+        geom.coordinates.forEach((poly, i) => {
+          polygons.push({
+            points: processRing(poly[0]),
+            label: `KP ${ev.parcela}${i > 0 ? ' (' + (i+1) + ')' : ''}`
+          });
+        });
+      }
+    });
+
+    if (!polygons.length) throw new Error('Nema poligona u geometriji');
+
+    toast(`📐 Transformišem u GK${zone}...`, 'blue');
+
+    // 3. Generiši DXF
+    const layerName = `KP_${ev.parcela}_KO_${ev.ko}`.replace(/[^a-zA-Z0-9_]/g, '_');
+    const dxf = buildDXF(polygons, layerName);
+
+    // 4. Download
+    const safe = (ev.ko + '_' + ev.parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fname = `KP_${safe}_GK${zone}.dxf`;
+    const blob = new Blob([dxf], { type: 'application/dxf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast(`✓ DXF preuzet: ${fname}  (GK${zone})`, 'green');
+
+  } catch (err) {
+    toast('DXF greška: ' + err.message, 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📐';
+  }
+}
 
 </script>
 </body>
