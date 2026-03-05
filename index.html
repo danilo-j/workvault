@@ -980,8 +980,6 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar')">Zatvori</button>
-      <button class="btn btn-outline" onclick="otvoriEKatastar()" style="border-color:#BB0009;color:#BB0009">🌐 eKatastar</button>
-      <button class="btn btn-outline" onclick="kopirajBookmarklet()" id="btn-bookmarklet">📋 Bookmarklet</button>
       <button class="btn btn-primary" id="btn-ek-fetch" onclick="ekFetchData()" disabled>⬇ Preuzmi automatski</button>
     </div>
   </div>
@@ -1871,6 +1869,7 @@ function renderEvidenceGrid(d) {
           <div class="predmet-actions">
             <button class="predmet-action-btn" onclick="showCard(${e.id})" title="Kartica">👤</button>
             <button class="predmet-action-btn" onclick="openElaborat(${e.id})" title="Elaborat">📄</button>
+            <button class="predmet-action-btn" onclick="openEKatastar(${e.id})" title="eKatastar" style="color:#BB0009">🏛</button>
             <button class="predmet-action-btn" onclick="preuzmiOrtofoto(${e.id})" title="Ortofoto" style="color:#1565c0">🛰</button>
             <button class="predmet-action-btn" onclick="preuzmiDXF(${e.id})" title="DXF (GK)" style="color:#2e7d32">📐</button>
             <button class="predmet-action-btn" onclick="editEvidence(${e.id})" title="Izmijeni">✏</button>
