@@ -903,7 +903,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     <div class="form-grid form-grid-2">
       <div class="form-group">
         <label>Opština (Područna jedinica)</label>
-        <select id="ek-opstina">
+        <select id="ek-opstina" onchange="ekPopulateKO()">
           <option value="">— odaberite opštinu —</option>
           <option value="Andrijevica">Andrijevica</option>
           <option value="Bar">Bar</option>
@@ -932,7 +932,9 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       </div>
       <div class="form-group">
         <label>KO (Katastarska opština)</label>
-        <input type="text" id="ek-ko" placeholder="npr. Crnča - Laholo">
+        <select id="ek-ko">
+          <option value="">— prvo odaberite opštinu —</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Broj parcele</label>
@@ -2795,7 +2797,7 @@ async function fillAndDownloadElaborat(templateB64, ev, broj, datum, vrsta, opis
 // eKATASTAR INTEGRACIJA
 // =========================================================
 
-// KO mapa: naziv → ID koji koristi eKatastar accordion
+// KO mapa po opštinama — naziv KO → eKatastar ID
 const EK_KO_MAP = {
   'Babajići': 2, 'Barice': 3, 'Bijelo Polje': 4, 'Bistrica': 54,
   'Bliškovo': 5, 'Bojišta': 6, 'Boljanin': 60, 'Cerovo': 7,
@@ -2813,22 +2815,70 @@ const EK_KO_MAP = {
   'Ujniče': 48, 'Zaton': 49, 'Čeoče': 9, 'Čokrlije': 10
 };
 
+// Mapa opština → lista KO naziva (sortirana abecedno)
+const OPSTINA_KO = {
+  'Bijelo Polje': [
+    'Babajići','Barice','Bijelo Polje','Bistrica','Bliškovo','Bojišta','Boljanin',
+    'Cerovo','Crniš','Crnča - Laholo','Dobrinje','Dubovo','Femića Krš','Godijevo',
+    'Goduša','Grab','Grančarevo','Ivanje','Jablanovo','Jabučno','Kanje','Kičava',
+    'Korita','Kostenica','Kovren','Kradenik','Kukulje','Lekovina','Lijeska','Lješnica',
+    'Lozna','Majstorovina','Milovo','Mioče','Mojstir','Muslići','Negobratina',
+    'Orahovica','Pali','Pape','Pavino Polje','Pećarska','Poda','Potrk','Prijelozi',
+    'Radulići','Ravna Rijeka','Sipanje','Sokolac','Srednje Brdo','Stožer','Tomaševo',
+    'Ujniče','Zaton','Čeoče','Čokrlije'
+  ],
+  // Za ostale opstine KO se unosi ručno (server ih auto-discovers nakon logina)
+};
+
+// Populiše KO select zavisno od odabrane opstine
+function ekPopulateKO(prefillValue) {
+  const opstina = document.getElementById('ek-opstina').value;
+  const koSel   = document.getElementById('ek-ko');
+  const koList  = OPSTINA_KO[opstina] || [];
+
+  koSel.innerHTML = '';
+
+  if (!opstina) {
+    koSel.innerHTML = '<option value="">— prvo odaberite opštinu —</option>';
+    return;
+  }
+
+  if (koList.length) {
+    // Poznate KO — prikaži dropdown
+    koSel.add(new Option('— odaberite KO —', ''));
+    koList.forEach(ko => koSel.add(new Option(ko, ko)));
+    if (prefillValue) koSel.value = prefillValue;
+  } else {
+    // Nepoznate KO — slobodan unos
+    koSel.innerHTML = '';
+    // Zamijeni select privremenim text inputom
+    const input = document.createElement('input');
+    input.type        = 'text';
+    input.id          = 'ek-ko';
+    input.placeholder = 'Unesite naziv KO';
+    input.value       = prefillValue || '';
+    input.style.cssText = koSel.style.cssText;
+    koSel.replaceWith(input);
+  }
+}
+
 function openEKatastar(evId) {
   const ev = DB.evidence.find(e => e.id === evId);
   if (!ev) return;
 
-  // Show info
   document.getElementById('ekatastar-stranka-info').innerHTML =
     `<strong>${ev.prezime} ${ev.ime}</strong> &nbsp;·&nbsp; ` +
     `KP: <strong>${ev.parcela||'—'}</strong> &nbsp;·&nbsp; ` +
     `LN: <strong>${ev.ln||'—'}</strong> &nbsp;·&nbsp; ` +
     `KO: <strong>${ev.ko||'—'}</strong>`;
 
-  // Pre-fill fields iz evidencije
-  document.getElementById('ek-opstina').value = ev.opstina || '';
+  // Postavi opstinu pa KO
+  const opstinaEl = document.getElementById('ek-opstina');
+  opstinaEl.value = ev.opstina || '';
+  ekPopulateKO(ev.ko || '');
+
   document.getElementById('ek-parcela').value = ev.parcela || '';
   document.getElementById('ek-ln').value      = ev.ln      || '';
-  document.getElementById('ek-ko').value      = ev.ko      || '';
 
   document.getElementById('modal-ekatastar').classList.add('open');
 }
@@ -3255,80 +3305,87 @@ async function ekSaveSetup() {
 }
 
 async function ekFetchData() {
-  const ko      = (document.getElementById('ek-ko')      || {}).value || '';
-  const opstina = (document.getElementById('ek-opstina') || {}).value || '';
-  const parcela = (document.getElementById('ek-parcela') || {}).value || '';
-  const ln      = (document.getElementById('ek-ln')      || {}).value || '';
+  const koEl    = document.getElementById('ek-ko');
+  const ko      = (koEl?.value || koEl?.textContent || '').trim();
+  const opstina = (document.getElementById('ek-opstina')?.value || '').trim();
+  const parcela = (document.getElementById('ek-parcela')?.value || '').trim();
+  const ln      = (document.getElementById('ek-ln')?.value || '').trim();
 
-  if (!ko.trim())                    { toast('Unesite naziv KO', 'red');              return; }
-  if (!opstina.trim())               { toast('Unesite naziv opštine', 'red');         return; }
-  if (!parcela.trim() && !ln.trim()) { toast('Unesite broj parcele ili LN', 'red');   return; }
-  if (!ekServerAvailable)            { toast('Lokalni server nije pokrenut', 'red');  return; }
-  if (!ekServerConfigured)           { toast('Postavi kredencijale prvo', 'red');     return; }
+  if (!ko)                       { toast('Odaberite/unesite KO', 'red');              return; }
+  if (!opstina)                  { toast('Odaberite opštinu', 'red');                 return; }
+  if (!parcela && !ln)           { toast('Unesite broj parcele ili LN', 'red');       return; }
+  if (!ekServerAvailable)        { toast('Lokalni server nije pokrenut', 'red');      return; }
+  if (!ekServerConfigured)       { toast('Postavi kredencijale prvo', 'red');         return; }
 
-  const wantExcel    = document.getElementById('ek-want-excel')?.checked ?? true;
-  const wantDxf      = document.getElementById('ek-want-dxf')?.checked ?? false;
+  const wantExcel    = document.getElementById('ek-want-excel')?.checked    ?? true;
+  const wantDxf      = document.getElementById('ek-want-dxf')?.checked      ?? false;
   const wantOrtofoto = document.getElementById('ek-want-ortofoto')?.checked ?? false;
+
+  if (!wantExcel && !wantDxf && !wantOrtofoto) {
+    toast('Odaberi barem jednu opciju', 'red'); return;
+  }
 
   const btn = document.getElementById('btn-ek-fetch');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Preuzimam...'; }
-  showLoading('Preuzimam podatke sa eKatastra...');
 
-  try {
-    const r = await fetch(EK_SERVER + '/fetch', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        ko:       ko.trim(),
-        opstina:  opstina.trim(),
-        parcela:  parcela.trim(),
-        ln:       ln.trim(),
-        headless: true
-      }),
-      signal: AbortSignal.timeout(180000)
-    });
-    const d = await r.json();
-    hideLoading();
+  const downloaded = [];
+  let fetchedData  = null;   // podaci iz /fetch (za evidenciju)
 
-    if (!d.ok || !d.data) {
-      toast('Greška: ' + (d.error || 'Nepoznata greška'), 'red');
-      return;
-    }
+  // ── PROCES 1: Excel (Selenium scrape) ─────────────────────────────────────
+  // Pokreće se samo ako je Excel čekiran
+  if (wantExcel) {
+    showLoading('Preuzimam podatke sa eKatastra (Selenium)...');
+    try {
+      const r = await fetch(EK_SERVER + '/fetch', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ ko, opstina, parcela, ln, headless: true }),
+        signal:  AbortSignal.timeout(180000)
+      });
+      const d = await r.json();
 
-    const downloaded = [];
-
-    // Excel: server već generiše i vraća base64 — samo downloadujemo
-    if (wantExcel && d.excel_b64 && d.excel_name) {
-      _downloadBase64(d.excel_b64, d.excel_name,
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      downloaded.push('📋 Excel');
-      toast('✓ Excel preuzet: ' + d.excel_name, 'green');
-    } else if (wantExcel && !d.excel_b64) {
-      toast('⚠ Excel nije generisan — provjeri template na serveru', 'red');
-    }
-
-    // DXF: GET /dxf?ko=...&parcela=... — server generiše ezdxf, vraća fajl direktno
-    if (wantDxf) {
-      const parcelaBr = parcela.trim() || (d.data.parcele?.[0]?.broj || '');
-      if (!parcelaBr) {
-        toast('⚠ DXF: nema broja parcele', 'red');
+      if (!d.ok || !d.data) {
+        toast('Greška /fetch: ' + (d.error || '?'), 'red');
       } else {
-        const dxfUrl = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko.trim())}&parcela=${encodeURIComponent(parcelaBr)}`;
+        fetchedData = d.data;
+        if (d.excel_b64 && d.excel_name) {
+          _downloadBase64(d.excel_b64, d.excel_name,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          downloaded.push('📋 Excel');
+          toast('✓ Excel preuzet: ' + d.excel_name, 'green');
+        } else {
+          toast('⚠ Excel nije generisan — provjeri template na serveru', 'red');
+        }
+      }
+    } catch(e) {
+      const msg = e.name === 'TimeoutError' ? 'Timeout (>3min)' : e.message;
+      toast('Greška Excel: ' + msg, 'red');
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // ── PROCES 2: DXF + Ortofoto (geo pipeline, dijele bearer token) ──────────
+  // Pokreće se samo ako je DXF ili Ortofoto čekiran — bez Selenuma
+  if (wantDxf || wantOrtofoto) {
+    const parcelaBr = parcela || fetchedData?.parcele?.[0]?.broj || '';
+    if (!parcelaBr) {
+      toast('⚠ DXF/Ortofoto: nema broja parcele', 'red');
+    } else {
+      if (wantDxf) {
+        // GET /dxf — server dohvata token + GeoJSON + ezdxf, vraća fajl direktno
+        const dxfUrl = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcelaBr)}`;
         const a = document.createElement('a');
         a.href = dxfUrl;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         downloaded.push('📐 DXF');
         toast('✓ DXF download pokrenut', 'green');
       }
-    }
 
-    // Ortofoto: pozivamo /ortofoto endpoint
-    if (wantOrtofoto) {
-      const parcelaBr = parcela.trim() || (d.data.parcele?.[0]?.broj || '');
-      if (parcelaBr) {
+      if (wantOrtofoto) {
         showLoading('Preuzimam ortofoto...');
         try {
-          await _downloadOrtofotoForData(ko.trim(), parcelaBr);
+          await _downloadOrtofotoForData(ko, parcelaBr);
           downloaded.push('🛰 Ortofoto');
         } catch(e) {
           toast('Ortofoto greška: ' + e.message, 'red');
@@ -3337,19 +3394,19 @@ async function ekFetchData() {
         }
       }
     }
-
-    closeModal('modal-ekatastar');
-    importEKatastarData(d.data, downloaded);
-
-  } catch(e) {
-    hideLoading();
-    const msg = e.name === 'TimeoutError'
-      ? 'Timeout (>3min). Provjerite browser i eKatastar stranicu.'
-      : e.message;
-    toast('Greška: ' + msg, 'red');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '⬇ Preuzmi automatski'; }
   }
+
+  if (btn) { btn.disabled = false; btn.textContent = '⬇ Preuzmi automatski'; }
+
+  closeModal('modal-ekatastar');
+
+  // Otvori rezultatski modal (sa podacima ako ima, ili praznim ako je bio samo geo)
+  const displayData = fetchedData || {
+    ko, opstina, ln,
+    parcela_pretrage: parcela,
+    vlasnici: [], parcele: [], objekti: []
+  };
+  importEKatastarData(displayData, downloaded);
 }
 
 // Helper: download base64 string kao fajl
