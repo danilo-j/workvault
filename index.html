@@ -3394,256 +3394,135 @@ async function ekFetchData() {
 
 // =============================================================================
 // ORTOFOTO + DXF EXPORT
+// Koordinatna transformacija (UTM34N → GK6/GK7) se radi u ekatastar.py (pyproj)
 // =============================================================================
 
-// ── Ortofoto ──────────────────────────────────────────────────────────────────
-async function preuzmiOrtofoto(evId) {
-  const ev = DB.evidence.find(e => e.id === evId);
-  if (!ev) return;
-  if (!ev.parcela || !ev.ko) { toast('Parcela ili KO nisu uneseni', 'red'); return; }
-  if (!ekServerAvailable) { toast('Lokalni server nije pokrenut', 'red'); return; }
-
-  toast('🛰 Generišem ortofoto...', 'blue');
-  const btn = event.target;
-  btn.disabled = true;
-  btn.textContent = '⏳';
-
-  try {
-    await _downloadOrtofotoForData(ev.ko, ev.parcela);
-  } catch (err) {
-    toast('Ortofoto greška: ' + err.message, 'red');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🛰';
-  }
-}
-
-// =============================================================================
-// DXF EXPORT — GeoJSON UTM34N → GK6/GK7 → DXF
-// =============================================================================
-
-// ── UTM34N → GK6 ili GK7 transformacija ──────────────────────────────────────
-// Oba sistema koriste Bessel ellipsoid + Helmert 7-param transform
-// Parametri: towgs84=262.089,234.687,753.224,4.85806,14.5378,-15.79343,-0.0535399999890274
-
-function utm34nToGK(easting, northing) {
-  // Korak 1: UTM34N (EPSG:32634, WGS84) → WGS84 geografske
-  const wgs = utm34nToWGS84(easting, northing);
-
-  // Korak 2: WGS84 → Bessel 1841 (Helmert 7-param, inverzno)
-  const bessel = wgs84ToBessel(wgs.lon, wgs.lat, 0);
-
-  // Korak 3: Bessel geografske → GK6 ili GK7 (centralni meridijan 18° ili 21°)
-  const lon = bessel.lon;
-  const gkZone = (lon >= 19.5) ? 7 : 6;
-  const cm = (gkZone === 7) ? 21.0 : 18.0;
-  const falseE = (gkZone === 7) ? 7500000 : 6500000;
-
-  const gk = besselToGK(bessel.lon, bessel.lat, cm, falseE);
-  return { x: gk.x, y: gk.y, zone: gkZone };
-}
-
-function utm34nToWGS84(E, N) {
-  // WGS84 ellipsoid
-  const a = 6378137.0, f = 1/298.257223563;
-  const b = a*(1-f), e2 = 1-(b/a)**2;
-  const e1 = (1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
-  const lon0 = 21.0 * Math.PI/180;
-  const k0 = 0.9996;
-  const x = E - 500000, y = N;
-  const M = y/k0;
-  const mu = M/(a*(1-e2/4-3*e2**2/64-5*e2**3/256));
-  const phi1 = mu
-    + (3*e1/2-27*e1**3/32)*Math.sin(2*mu)
-    + (21*e1**2/16-55*e1**4/32)*Math.sin(4*mu)
-    + (151*e1**3/96)*Math.sin(6*mu)
-    + (1097*e1**4/512)*Math.sin(8*mu);
-  const N1 = a/Math.sqrt(1-e2*Math.sin(phi1)**2);
-  const T1 = Math.tan(phi1)**2;
-  const C1 = e2/(1-e2)*Math.cos(phi1)**2;
-  const R1 = a*(1-e2)/(1-e2*Math.sin(phi1)**2)**1.5;
-  const D = x/(N1*k0);
-  const lat = phi1 - (N1*Math.tan(phi1)/R1)*(
-    D**2/2
-    -(5+3*T1+10*C1-4*C1**2-9*(e2/(1-e2)))*D**4/24
-    +(61+90*T1+298*C1+45*T1**2-252*(e2/(1-e2))-3*C1**2)*D**6/720
-  );
-  const lon = lon0 + (
-    D-(1+2*T1+C1)*D**3/6
-    +(5-2*C1+28*T1-3*C1**2+8*(e2/(1-e2))+24*T1**2)*D**5/120
-  )/Math.cos(phi1);
-  return { lon: lon*180/Math.PI, lat: lat*180/Math.PI };
-}
-
-function wgs84ToBessel(lon, lat, h) {
-  // WGS84 → Bessel 1841 Helmert 7-param (inverzni smjer — oduzimamo parametre)
-  // towgs84=262.089,234.687,753.224,4.85806,14.5378,-15.79343,-0.0535399999890274
-  // Parametri su WGS84→Bessel kad se primijene inverzno
-  const dx=-262.089, dy=-234.687, dz=-753.224;
-  const rx=-4.85806*Math.PI/(180*3600);
-  const ry=-14.5378*Math.PI/(180*3600);
-  const rz=15.79343*Math.PI/(180*3600);
-  const ds=0.0535399999890274/1e6;
-
-  // WGS84 elipsoid → kartezijski
-  const aW=6378137.0, fW=1/298.257223563, eW2=2*fW-fW**2;
-  const latR=lat*Math.PI/180, lonR=lon*Math.PI/180;
-  const NW=aW/Math.sqrt(1-eW2*Math.sin(latR)**2);
-  const X=(NW+h)*Math.cos(latR)*Math.cos(lonR);
-  const Y=(NW+h)*Math.cos(latR)*Math.sin(lonR);
-  const Z=(NW*(1-eW2)+h)*Math.sin(latR);
-
-  // Helmert transform (7-param)
-  const s=1+ds;
-  const X2=dx+s*(X+rz*Y-ry*Z);
-  const Y2=dy+s*(-rz*X+Y+rx*Z);
-  const Z2=dz+s*(ry*X-rx*Y+Z);
-
-  // Kartezijski → Bessel geografske
-  const aB=6377397.155, fB=1/299.1528128, eB2=2*fB-fB**2;
-  const p=Math.sqrt(X2**2+Y2**2);
-  const theta=Math.atan2(Z2*aB, p*(aB*Math.sqrt(1-eB2)));
-  const latB=Math.atan2(
-    Z2+eB2/(1-eB2)*aB*Math.sin(theta)**3,
-    p-eB2*aB*Math.cos(theta)**3
-  );
-  const lonB=Math.atan2(Y2,X2);
-  return { lon: lonB*180/Math.PI, lat: latB*180/Math.PI };
-}
-
-function besselToGK(lon, lat, cm, falseE) {
-  // Bessel 1841 → Gauss-Krüger transversal Mercator
-  const a=6377397.155, f=1/299.1528128, b=a*(1-f), e2=1-(b/a)**2;
-  const k0=0.9999;
-  const phi=lat*Math.PI/180;
-  const lam=lon*Math.PI/180;
-  const lam0=cm*Math.PI/180;
-  const dl=lam-lam0;
-  const N=a/Math.sqrt(1-e2*Math.sin(phi)**2);
-  const T=Math.tan(phi)**2;
-  const C=(e2/(1-e2))*Math.cos(phi)**2;
-  const A=Math.cos(phi)*dl;
-  const e4=e2**2, e6=e2**3;
-  const M=a*((1-e2/4-3*e4/64-5*e6/256)*phi
-    -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
-    +(15*e4/256+45*e6/1024)*Math.sin(4*phi)
-    -(35*e6/3072)*Math.sin(6*phi));
-  const x=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T**2+72*C-58*(e2/(1-e2)))*A**5/120)+falseE;
-  const y=k0*(M+N*Math.tan(phi)*(A**2/2+(5-T+9*C+4*C**2)*A**4/24+(61-58*T+T**2+600*C-330*(e2/(1-e2)))*A**6/720));
-  return { x, y };
-}
-
-// ── GeoJSON koordinate transform ───────────────────────────────────────────────
-function transformCoords(coords) {
-  // coords su [[e,n], ...] u UTM34N
-  // Vrati { points: [[x,y],...], zone: 6|7 }
-  let zone = 7;
-  const pts = coords.map(([e, n]) => {
-    const gk = utm34nToGK(e, n);
-    zone = gk.zone;
-    return [gk.x, gk.y];
-  });
-  return { points: pts, zone };
-}
-
-// ── DXF generator ─────────────────────────────────────────────────────────────
+// ── DXF generator (AC1015 / R2000 kompatibilan) ───────────────────────────────
 function buildDXF(polygons, layerName) {
-  // Generiši DXF R2000 sa LWPOLYLINE entitetima
-  // Koristimo \r\n kao separator (DXF standard)
+  // Separator: \r\n (DXF standard)
   const NL = '\r\n';
-  const R = (s) => s + NL;  // record helper
+
+  // Handle counter — svaki entitet mora imati jedinstven handle (hex string)
+  let _h = 1;
+  const H = () => (_h++).toString(16).toUpperCase();
+
+  // Pomoćna f-ja: group code + vrijednost
+  const G = (code, val) => String(code) + NL + String(val) + NL;
+
+  // Extents
+  const allPts = polygons.flatMap(p => p.points);
+  const xs = allPts.map(p => p[0]), ys = allPts.map(p => p[1]);
+  const xmin = Math.min(...xs), xmax = Math.max(...xs);
+  const ymin = Math.min(...ys), ymax = Math.max(...ys);
+  // Visina teksta labele ~1/500 dijagonale, min 2m, max 10m
+  const diag = Math.sqrt((xmax-xmin)**2 + (ymax-ymin)**2);
+  const txtH  = Math.min(10, Math.max(2, +(diag / 500).toFixed(2)));
 
   let d = '';
-  // Compute extents
-  let allPts = polygons.flatMap(p => p.points);
-  let xs = allPts.map(p=>p[0]), ys = allPts.map(p=>p[1]);
-  let xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
-  // HEADER
-  d += R('0') + R('SECTION') + R('2') + R('HEADER');
-  d += R('9') + R('$ACADVER') + R('1') + R('AC1015');
-  d += R('9') + R('$INSUNITS') + R('70') + R('6');
-  d += R('9') + R('$EXTMIN') + R('10') + R(xmin.toFixed(3)) + R('20') + R(ymin.toFixed(3)) + R('30') + R('0.0');
-  d += R('9') + R('$EXTMAX') + R('10') + R(xmax.toFixed(3)) + R('20') + R(ymax.toFixed(3)) + R('30') + R('0.0');
-  d += R('9') + R('$LIMMIN') + R('10') + R(xmin.toFixed(3)) + R('20') + R(ymin.toFixed(3));
-  d += R('9') + R('$LIMMAX') + R('10') + R(xmax.toFixed(3)) + R('20') + R(ymax.toFixed(3));
-  d += R('0') + R('ENDSEC');
-  // TABLES
-  d += R('0') + R('SECTION') + R('2') + R('TABLES');
-  d += R('0') + R('TABLE') + R('2') + R('LAYER') + R('70') + R('2');
-  d += R('0') + R('LAYER') + R('2') + R(layerName) + R('70') + R('0') + R('62') + R('3') + R('6') + R('CONTINUOUS');
-  d += R('0') + R('LAYER') + R('2') + R('LABELS') + R('70') + R('0') + R('62') + R('7') + R('6') + R('CONTINUOUS');
-  d += R('0') + R('ENDTAB');
-  d += R('0') + R('TABLE') + R('2') + R('LTYPE') + R('70') + R('1');
-  d += R('0') + R('LTYPE') + R('2') + R('CONTINUOUS') + R('70') + R('0') + R('3') + R('Solid line') + R('72') + R('65') + R('73') + R('0') + R('40') + R('0.0');
-  d += R('0') + R('ENDTAB');
-  d += R('0') + R('ENDSEC');
-  // BLOCKS (required in AC1015)
-  d += R('0') + R('SECTION') + R('2') + R('BLOCKS');
-  d += R('0') + R('BLOCK') + R('8') + R('0') + R('2') + R('*Model_Space') + R('70') + R('0') + R('10') + R('0.0') + R('20') + R('0.0') + R('30') + R('0.0') + R('3') + R('*Model_Space') + R('1') + R('');
-  d += R('0') + R('ENDBLK') + R('8') + R('0');
-  d += R('0') + R('ENDSEC');
-  // ENTITIES
-  d += R('0') + R('SECTION') + R('2') + R('ENTITIES');
+
+  // ── HEADER ────────────────────────────────────────────────────────────────
+  d += G(0,'SECTION') + G(2,'HEADER');
+  d += G(9,'$ACADVER') + G(1,'AC1015');
+  d += G(9,'$DWGCODEPAGE') + G(3,'ANSI_1252');
+  d += G(9,'$INSUNITS') + G(70,6);           // 6 = metres
+  d += G(9,'$MEASUREMENT') + G(70,1);        // 1 = metric
+  d += G(9,'$EXTMIN') + G(10,xmin.toFixed(3)) + G(20,ymin.toFixed(3)) + G(30,'0.0');
+  d += G(9,'$EXTMAX') + G(10,xmax.toFixed(3)) + G(20,ymax.toFixed(3)) + G(30,'0.0');
+  d += G(9,'$LIMMIN') + G(10,xmin.toFixed(3)) + G(20,ymin.toFixed(3));
+  d += G(9,'$LIMMAX') + G(10,xmax.toFixed(3)) + G(20,ymax.toFixed(3));
+  d += G(0,'ENDSEC');
+
+  // ── TABLES ────────────────────────────────────────────────────────────────
+  d += G(0,'SECTION') + G(2,'TABLES');
+
+  // LTYPE table
+  d += G(0,'TABLE') + G(2,'LTYPE') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,1);
+  d += G(0,'LTYPE') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbLinetypeTableRecord');
+  d += G(2,'CONTINUOUS') + G(70,0) + G(3,'Solid line') + G(72,65) + G(73,0) + G(40,'0.0');
+  d += G(0,'ENDTAB');
+
+  // LAYER table
+  const layerH = H(), labelsH = H();
+  d += G(0,'TABLE') + G(2,'LAYER') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,2);
+  // Sloj za konture parcele (zelena = 3)
+  d += G(0,'LAYER') + G(5,layerH) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbLayerTableRecord');
+  d += G(2,layerName) + G(70,0) + G(62,3) + G(6,'CONTINUOUS');
+  // Sloj za labele (bijela = 7)
+  d += G(0,'LAYER') + G(5,labelsH) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbLayerTableRecord');
+  d += G(2,'LABELS') + G(70,0) + G(62,7) + G(6,'CONTINUOUS');
+  d += G(0,'ENDTAB');
+
+  // STYLE table (potreban za TEXT entitet)
+  d += G(0,'TABLE') + G(2,'STYLE') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,1);
+  d += G(0,'STYLE') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbTextStyleTableRecord');
+  d += G(2,'STANDARD') + G(70,0) + G(40,'0.0') + G(41,'1.0') + G(50,'0.0') + G(71,0) + G(42,'2.5') + G(3,'txt') + G(4,'');
+  d += G(0,'ENDTAB');
+
+  // BLOCK_RECORD table (obavezna u AC1015)
+  d += G(0,'TABLE') + G(2,'BLOCK_RECORD') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,2);
+  d += G(0,'BLOCK_RECORD') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbBlockTableRecord') + G(2,'*Model_Space');
+  d += G(0,'BLOCK_RECORD') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbBlockTableRecord') + G(2,'*Paper_Space');
+  d += G(0,'ENDTAB');
+
+  d += G(0,'ENDSEC');
+
+  // ── BLOCKS ────────────────────────────────────────────────────────────────
+  d += G(0,'SECTION') + G(2,'BLOCKS');
+  // *Model_Space blok (obavezan)
+  d += G(0,'BLOCK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0');
+  d += G(100,'AcDbBlockBegin') + G(2,'*Model_Space') + G(70,0);
+  d += G(10,'0.0') + G(20,'0.0') + G(30,'0.0') + G(3,'*Model_Space') + G(1,'');
+  d += G(0,'ENDBLK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0') + G(100,'AcDbBlockEnd');
+  // *Paper_Space blok (obavezan u AC1015)
+  d += G(0,'BLOCK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0');
+  d += G(100,'AcDbBlockBegin') + G(2,'*Paper_Space') + G(70,0);
+  d += G(10,'0.0') + G(20,'0.0') + G(30,'0.0') + G(3,'*Paper_Space') + G(1,'');
+  d += G(0,'ENDBLK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0') + G(100,'AcDbBlockEnd');
+  d += G(0,'ENDSEC');
+
+  // ── ENTITIES ──────────────────────────────────────────────────────────────
+  d += G(0,'SECTION') + G(2,'ENTITIES');
 
   polygons.forEach(({ points, label }) => {
-    d += R('0') + R('LWPOLYLINE');
-    d += R('5') + R(Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase());
-    d += R('100') + R('AcDbEntity');
-    d += R('8') + R(layerName);
-    d += R('100') + R('AcDbPolyline');
-    d += R('90') + R(String(points.length));
-    d += R('70') + R('1');
-    d += R('43') + R('0.0');
+    // LWPOLYLINE — zatvorena kontura parcele
+    d += G(0,'LWPOLYLINE');
+    d += G(5,H());
+    d += G(100,'AcDbEntity');
+    d += G(8,layerName);
+    d += G(100,'AcDbPolyline');
+    d += G(90,points.length);   // broj tačaka
+    d += G(70,1);                // 1 = zatvorena
+    d += G(43,'0.0');            // konstantna širina
     points.forEach(([x, y]) => {
-      d += R('10') + R(x.toFixed(3));
-      d += R('20') + R(y.toFixed(3));
+      d += G(10, x.toFixed(3));
+      d += G(20, y.toFixed(3));
     });
+
+    // TEXT labela u centroidu poligona
     if (label) {
-      const cx = points.reduce((s,[x])=>s+x,0)/points.length;
-      const cy = points.reduce((s,[,y])=>s+y,0)/points.length;
-      d += R('0') + R('TEXT');
-      d += R('5') + R(Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase());
-      d += R('100') + R('AcDbEntity');
-      d += R('8') + R('LABELS');
-      d += R('100') + R('AcDbText');
-      d += R('10') + R(cx.toFixed(3));
-      d += R('20') + R(cy.toFixed(3));
-      d += R('30') + R('0.0');
-      d += R('40') + R('2.0');
-      d += R('1') + R(label);
-      d += R('72') + R('1');
-      d += R('11') + R(cx.toFixed(3));
-      d += R('21') + R(cy.toFixed(3));
-      d += R('31') + R('0.0');
-      d += R('100') + R('AcDbText');
+      const cx = (points.reduce((s,[x])=>s+x, 0) / points.length).toFixed(3);
+      const cy = (points.reduce((s,[,y])=>s+y, 0) / points.length).toFixed(3);
+      d += G(0,'TEXT');
+      d += G(5,H());
+      d += G(100,'AcDbEntity');
+      d += G(8,'LABELS');
+      d += G(100,'AcDbText');
+      d += G(10,cx) + G(20,cy) + G(30,'0.0');  // insertion point
+      d += G(40, txtH.toFixed(3));               // visina teksta
+      d += G(1,label);                           // sadržaj
+      d += G(7,'STANDARD');                      // stil fonta
+      d += G(72,1);                              // horizontalno: centar
+      d += G(11,cx) + G(21,cy) + G(31,'0.0');   // alignment point
+      d += G(100,'AcDbText');                    // drugi AcDbText (obavezan za AC1015 justify)
+      d += G(73,2);                              // vertikalno: middle
     }
   });
 
-  d += R('0') + R('ENDSEC') + R('0') + R('EOF');
+  d += G(0,'ENDSEC');
+  d += G(0,'EOF');
   return d;
 }
 
-// ── Glavni DXF export ──────────────────────────────────────────────────────────
-async function preuzmiDXF(evId) {
-  const ev = DB.evidence.find(e => e.id === evId);
-  if (!ev) return;
-  if (!ev.parcela || !ev.ko) { toast('Parcela ili KO nisu uneseni', 'red'); return; }
-  if (!ekServerAvailable) { toast('Lokalni server nije pokrenut', 'red'); return; }
-
-  const btn = event.target;
-  btn.disabled = true;
-  btn.textContent = '⏳';
-  toast('📐 Dohvatam geometriju...', 'blue');
-
-  try {
-    await _downloadDXFForData(ev.ko, ev.parcela);
-  } catch (err) {
-    toast('DXF greška: ' + err.message, 'red');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '📐';
-  }
-}
 
 </script>
 </body>
