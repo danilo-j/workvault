@@ -947,9 +947,26 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
     <!-- Panel A: server aktivan i konfigurisan -->
     <div id="ek-panel-server" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px">
       <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2e7d32;margin-bottom:5px">✓ Lokalni server aktivan</div>
-      <div style="color:#1b5e20;line-height:1.7">
+      <div style="color:#1b5e20;line-height:1.7;margin-bottom:12px">
         Kliknite <strong>"Preuzmi automatski"</strong> — Python script se sam prijavljuje i preuzima podatke.<br>
         <span id="ek-server-user" style="color:#388e3c;font-size:12px;font-style:italic"></span>
+      </div>
+      <div style="border-top:1px solid #a5d6a7;padding-top:10px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#388e3c;margin-bottom:8px">Što preuzeti odmah:</div>
+        <div style="display:flex;gap:20px">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:#1b5e20;font-weight:500">
+            <input type="checkbox" id="ek-want-excel" checked style="width:15px;height:15px;cursor:pointer;margin:0">
+            📋 Excel (Spisak prijava)
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:#1b5e20;font-weight:500">
+            <input type="checkbox" id="ek-want-dxf" style="width:15px;height:15px;cursor:pointer;margin:0">
+            📐 DXF (GK6/GK7)
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:#1b5e20;font-weight:500">
+            <input type="checkbox" id="ek-want-ortofoto" style="width:15px;height:15px;cursor:pointer;margin:0">
+            🛰 Ortofoto (.png)
+          </label>
+        </div>
       </div>
     </div>
 
@@ -989,10 +1006,10 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
 <div class="modal-overlay" id="modal-ekatastar-import">
   <div class="modal wide">
     <div class="modal-header">
-      <div class="modal-title">🏛 Uvoz podataka sa eKatastra</div>
+      <div class="modal-title">🏛 Preuzeti podaci sa eKatastra</div>
       <button class="modal-close" onclick="closeModal('modal-ekatastar-import')">✕</button>
     </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Preuzeti su sledeći podaci:</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Uspješno preuzeto:</div>
     <div style="background:var(--surface2);border-radius:10px;padding:14px 16px;font-size:13px;line-height:2;border:1px solid var(--border)">
       <div><b>KO:</b> <span id="ek-import-ko"></span></div>
       <div><b>LN:</b> <span id="ek-import-ln"></span></div>
@@ -1000,38 +1017,7 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div><b>Parcele:</b> <span id="ek-import-parcele"></span></div>
       <div><b>Objekti:</b> <span id="ek-import-objekti"></span></div>
     </div>
-
-    <!-- Instant download buttons -->
-    <div style="margin-top:16px">
-      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Preuzmi odmah — klik → download</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="ek-download-btns">
-
-        <button class="btn btn-primary" id="btn-ek-xlsx" onclick="ekDownload('xlsx')" style="justify-content:flex-start;gap:10px">
-          📋 <span>Spisak prijava</span>
-          <span id="ek-st-xlsx" style="margin-left:auto;font-size:11px;opacity:.7"></span>
-        </button>
-
-        <button class="btn btn-outline" id="btn-ek-dxf" onclick="ekDownload('dxf')" style="justify-content:flex-start;gap:10px">
-          📐 <span>DXF <small style="opacity:.6">(GK6/GK7 · Bessel)</small></span>
-          <span id="ek-st-dxf" style="margin-left:auto;font-size:11px"></span>
-        </button>
-
-        <button class="btn btn-outline" id="btn-ek-ortofoto" onclick="ekDownload('ortofoto')" style="justify-content:flex-start;gap:10px">
-          🛰 <span>Ortofoto (.png)</span>
-          <span id="ek-st-ortofoto" style="margin-left:auto;font-size:11px"></span>
-        </button>
-
-        <button class="btn btn-outline" id="btn-ek-zip" onclick="ekDownload('zip')" style="justify-content:flex-start;gap:10px;grid-column:1/-1">
-          📦 <span>Sve u jednom ZIP-u</span>
-          <span id="ek-st-zip" style="margin-left:auto;font-size:11px"></span>
-        </button>
-
-      </div>
-      <div id="ek-server-needed" style="display:none;margin-top:10px;padding:8px 12px;background:var(--amber-light);border:1px solid rgba(180,83,9,.3);border-radius:8px;font-size:12px;color:var(--amber)">
-        ⚠ DXF, ortofoto i ZIP zahtijevaju aktivni lokalni server (<code>python ekatastar.py --server</code>)
-      </div>
-    </div>
-
+    <div id="ek-import-downloads-done" style="margin-top:12px;font-size:12px;color:var(--accent);display:none"></div>
     <div class="form-actions" style="margin-top:14px">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar-import')">Zatvori</button>
       <button class="btn btn-primary" onclick="ekImportToEvidence()">➕ Dodaj u evidenciju</button>
@@ -2934,8 +2920,7 @@ function checkEKatastarHash() {
   }
 }
 
-function importEKatastarData(data) {
-  // Show import modal with preview
+function importEKatastarData(data, downloaded) {
   document.getElementById('ek-import-ko').textContent   = data.ko || '—';
   document.getElementById('ek-import-ln').textContent   = data.ln || '—';
   document.getElementById('ek-import-vlasnici').textContent =
@@ -2949,19 +2934,27 @@ function importEKatastarData(data) {
       `Zgr.${o.redniBroj||''}${o.pd?' PD'+o.pd:''}: ${o.nacinKoriscenja} ${o.povrsina}m² (${o.spratnost||''})`
     ).join('<br>') || '—';
 
-  // Reset statusa dugmadi
-  ['xlsx','dxf','ortofoto','zip'].forEach(t => _ekSetStatus(`ek-st-${t}`, '', ''));
-
-  // Server upozorenje
-  const needServer = document.getElementById('ek-server-needed');
-  if (needServer) needServer.style.display = ekServerAvailable ? 'none' : 'block';
+  // Pokaži šta je već preuzeto
+  const dlEl = document.getElementById('ek-import-downloads-done');
+  if (dlEl) {
+    if (downloaded && downloaded.length) {
+      dlEl.textContent = '✓ Preuzeto: ' + downloaded.join('  ·  ');
+      dlEl.style.display = 'block';
+    } else {
+      dlEl.style.display = 'none';
+    }
+  }
 
   window._ekatastarImportData = data;
   document.getElementById('modal-ekatastar-import').classList.add('open');
 }
 
-// ── eKatastar instant download helpers ───────────────────────────────────────
-// Jedan klik → jedan download. Bez checkboxova, bez čekanja na sve odjednom.
+// Stara funkcija — zadržana zbog kompatibilnosti (bookmarklet path)
+async function ekImportConfirm() {
+  const data = window._ekatastarImportData;
+  if (!data) return;
+  closeModal('modal-ekatastar-import');
+}
 
 function _ekParcela(data) {
   if (data.parcela_pretrage) return data.parcela_pretrage;
@@ -2970,109 +2963,21 @@ function _ekParcela(data) {
   return p.podbroj && p.podbroj !== '0' ? `${p.broj}/${p.podbroj}` : p.broj;
 }
 
-function _ekSetStatus(id, txt, color) {
-  const el = document.getElementById(id);
-  if (el) { el.textContent = txt; el.style.color = color || ''; }
-}
-
-async function ekDownload(type) {
-  const data    = window._ekatastarImportData;
-  if (!data) return;
-  const ko      = data.ko      || '';
-  const parcela = _ekParcela(data);
-  const stId    = `ek-st-${type}`;
-  const btnId   = `btn-ek-${type === 'xlsx' ? 'xlsx' : type === 'zip' ? 'zip' : type}`;
-  const btn     = document.getElementById(btnId);
-
-  // xlsx: generišemo client-side (nema potrebe za serverom)
-  if (type === 'xlsx') {
-    _ekSetStatus(stId, '⏳', '');
-    if (btn) btn.disabled = true;
-    try {
-      await generateSpisakPrijava(data);
-      _ekSetStatus(stId, '✓', 'var(--accent)');
-    } catch(e) {
-      _ekSetStatus(stId, '❌', 'var(--red)');
-      toast('Greška: ' + e.message, 'red');
-    } finally {
-      if (btn) btn.disabled = false;
-    }
-    return;
-  }
-
-  // DXF, ortofoto, zip — zahtijevaju server
-  if (!ekServerAvailable) {
-    toast('Lokalni server nije pokrenut (python ekatastar.py --server)', 'red');
-    _ekSetStatus(stId, '❌ server', 'var(--red)');
-    return;
-  }
-  if (!parcela) {
-    toast('Nema broja parcele za ' + type.toUpperCase(), 'red');
-    _ekSetStatus(stId, '❌ parcela?', 'var(--red)');
-    return;
-  }
-
-  _ekSetStatus(stId, '⏳', '');
-  if (btn) btn.disabled = true;
-
-  try {
-    if (type === 'dxf') {
-      // GET /dxf?ko=...&parcela=...  — browser preuzima direktno
-      const url = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko)}&parcela=${encodeURIComponent(parcela)}`;
-      const a = document.createElement('a'); a.href = url; a.click();
-      _ekSetStatus(stId, '✓', 'var(--accent)');
-      toast('✓ DXF download pokrenut', 'green');
-
-    } else if (type === 'ortofoto') {
-      await _downloadOrtofotoForData(ko, parcela);
-      _ekSetStatus(stId, '✓', 'var(--accent)');
-
-    } else if (type === 'zip') {
-      _ekSetStatus(stId, '⏳ (može potrajati ~30s)', '');
-      const r = await fetch(`${EK_SERVER}/export`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ko, parcela, data}),
-        signal: AbortSignal.timeout(120000)
-      });
-      if (!r.ok) {
-        const err = await r.json().catch(() => ({error: r.statusText}));
-        throw new Error(err.error || r.statusText);
-      }
-      const blob = await r.blob();
-      const safe = (ko + '_' + parcela).replace(/[^a-zA-Z0-9_-]/g,'_');
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url; a.download = `export_${safe}.zip`; a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      _ekSetStatus(stId, '✓', 'var(--accent)');
-      toast('✓ ZIP preuzet!', 'green');
-    }
-  } catch(e) {
-    _ekSetStatus(stId, '❌', 'var(--red)');
-    toast(`${type.toUpperCase()} greška: ${e.message}`, 'red');
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-// Dodaj scrapeovane podatke u evidenciju (bez downloada)
 function ekImportToEvidence() {
   const data = window._ekatastarImportData;
   if (!data) return;
   const v0  = (data.vlasnici || [])[0] || {};
-  const p0  = (data.parcele  || [])[0] || {};
   const ime = (v0.imePrezime || '').split(' ');
   const ev  = {
-    id:      Date.now(),
-    prezime: ime[0] || '',
-    ime:     ime.slice(1).join(' '),
-    jmbg:    v0.jmbg    || '',
-    ko:      data.ko    || '',
-    ln:      data.ln    || '',
-    parcela: _ekParcela(data),
-    opstina: data.opstina || '',
-    status:  'active',
+    id:          Date.now(),
+    prezime:     ime[0] || '',
+    ime:         ime.slice(1).join(' '),
+    jmbg:        v0.jmbg      || '',
+    ko:          data.ko      || '',
+    ln:          data.ln      || '',
+    parcela:     _ekParcela(data),
+    opstina:     data.opstina || '',
+    status:      'active',
     fotografije: [], dwg: [], elaborat: []
   };
   DB.evidence.push(ev);
@@ -3080,9 +2985,6 @@ function ekImportToEvidence() {
   closeModal('modal-ekatastar-import');
   toast('✓ Dodato u evidenciju!', 'green');
 }
-
-// Stara funkcija — zadržana zbog kompatibilnosti
-async function ekImportConfirm() { ekDownload('xlsx'); }
 
 // _downloadDXFForData je zamijenjen server-side /dxf endpointom (ekDownload('dxf'))
 
@@ -3364,6 +3266,10 @@ async function ekFetchData() {
   if (!ekServerAvailable)            { toast('Lokalni server nije pokrenut', 'red');  return; }
   if (!ekServerConfigured)           { toast('Postavi kredencijale prvo', 'red');     return; }
 
+  const wantExcel    = document.getElementById('ek-want-excel')?.checked ?? true;
+  const wantDxf      = document.getElementById('ek-want-dxf')?.checked ?? false;
+  const wantOrtofoto = document.getElementById('ek-want-ortofoto')?.checked ?? false;
+
   const btn = document.getElementById('btn-ek-fetch');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Preuzimam...'; }
   showLoading('Preuzimam podatke sa eKatastra...');
@@ -3379,16 +3285,62 @@ async function ekFetchData() {
         ln:       ln.trim(),
         headless: true
       }),
-      signal: AbortSignal.timeout(180000)  // 3 minute timeout
+      signal: AbortSignal.timeout(180000)
     });
     const d = await r.json();
     hideLoading();
-    if (d.ok && d.data) {
-      closeModal('modal-ekatastar');
-      importEKatastarData(d.data);
-    } else {
+
+    if (!d.ok || !d.data) {
       toast('Greška: ' + (d.error || 'Nepoznata greška'), 'red');
+      return;
     }
+
+    const downloaded = [];
+
+    // Excel: server već generiše i vraća base64 — samo downloadujemo
+    if (wantExcel && d.excel_b64 && d.excel_name) {
+      _downloadBase64(d.excel_b64, d.excel_name,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      downloaded.push('📋 Excel');
+      toast('✓ Excel preuzet: ' + d.excel_name, 'green');
+    } else if (wantExcel && !d.excel_b64) {
+      toast('⚠ Excel nije generisan — provjeri template na serveru', 'red');
+    }
+
+    // DXF: GET /dxf?ko=...&parcela=... — server generiše ezdxf, vraća fajl direktno
+    if (wantDxf) {
+      const parcelaBr = parcela.trim() || (d.data.parcele?.[0]?.broj || '');
+      if (!parcelaBr) {
+        toast('⚠ DXF: nema broja parcele', 'red');
+      } else {
+        const dxfUrl = `${EK_SERVER}/dxf?ko=${encodeURIComponent(ko.trim())}&parcela=${encodeURIComponent(parcelaBr)}`;
+        const a = document.createElement('a');
+        a.href = dxfUrl;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        downloaded.push('📐 DXF');
+        toast('✓ DXF download pokrenut', 'green');
+      }
+    }
+
+    // Ortofoto: pozivamo /ortofoto endpoint
+    if (wantOrtofoto) {
+      const parcelaBr = parcela.trim() || (d.data.parcele?.[0]?.broj || '');
+      if (parcelaBr) {
+        showLoading('Preuzimam ortofoto...');
+        try {
+          await _downloadOrtofotoForData(ko.trim(), parcelaBr);
+          downloaded.push('🛰 Ortofoto');
+        } catch(e) {
+          toast('Ortofoto greška: ' + e.message, 'red');
+        } finally {
+          hideLoading();
+        }
+      }
+    }
+
+    closeModal('modal-ekatastar');
+    importEKatastarData(d.data, downloaded);
+
   } catch(e) {
     hideLoading();
     const msg = e.name === 'TimeoutError'
@@ -3398,6 +3350,20 @@ async function ekFetchData() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '⬇ Preuzmi automatski'; }
   }
+}
+
+// Helper: download base64 string kao fajl
+function _downloadBase64(b64, filename, mime) {
+  const byteChars = atob(b64);
+  const bytes = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([bytes], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
 // Auto-provjera kada se modal otvori
@@ -3424,135 +3390,9 @@ async function ekFetchData() {
 
 // =============================================================================
 // ORTOFOTO + DXF EXPORT
-// Koordinatna transformacija (UTM34N → GK6/GK7) se radi u ekatastar.py (pyproj)
+// DXF koordinatna transformacija (UTM34N → GK6/GK7, ezdxf) se radi u ekatastar.py
+// Frontend samo poziva GET /dxf?ko=...&parcela=... — server vraća .dxf direktno
 // =============================================================================
-
-// ── DXF generator (AC1015 / R2000 kompatibilan) ───────────────────────────────
-function buildDXF(polygons, layerName) {
-  // Separator: \r\n (DXF standard)
-  const NL = '\r\n';
-
-  // Handle counter — svaki entitet mora imati jedinstven handle (hex string)
-  let _h = 1;
-  const H = () => (_h++).toString(16).toUpperCase();
-
-  // Pomoćna f-ja: group code + vrijednost
-  const G = (code, val) => String(code) + NL + String(val) + NL;
-
-  // Extents
-  const allPts = polygons.flatMap(p => p.points);
-  const xs = allPts.map(p => p[0]), ys = allPts.map(p => p[1]);
-  const xmin = Math.min(...xs), xmax = Math.max(...xs);
-  const ymin = Math.min(...ys), ymax = Math.max(...ys);
-  // Visina teksta labele ~1/500 dijagonale, min 2m, max 10m
-  const diag = Math.sqrt((xmax-xmin)**2 + (ymax-ymin)**2);
-  const txtH  = Math.min(10, Math.max(2, +(diag / 500).toFixed(2)));
-
-  let d = '';
-
-  // ── HEADER ────────────────────────────────────────────────────────────────
-  d += G(0,'SECTION') + G(2,'HEADER');
-  d += G(9,'$ACADVER') + G(1,'AC1015');
-  d += G(9,'$DWGCODEPAGE') + G(3,'ANSI_1252');
-  d += G(9,'$INSUNITS') + G(70,6);           // 6 = metres
-  d += G(9,'$MEASUREMENT') + G(70,1);        // 1 = metric
-  d += G(9,'$EXTMIN') + G(10,xmin.toFixed(3)) + G(20,ymin.toFixed(3)) + G(30,'0.0');
-  d += G(9,'$EXTMAX') + G(10,xmax.toFixed(3)) + G(20,ymax.toFixed(3)) + G(30,'0.0');
-  d += G(9,'$LIMMIN') + G(10,xmin.toFixed(3)) + G(20,ymin.toFixed(3));
-  d += G(9,'$LIMMAX') + G(10,xmax.toFixed(3)) + G(20,ymax.toFixed(3));
-  d += G(0,'ENDSEC');
-
-  // ── TABLES ────────────────────────────────────────────────────────────────
-  d += G(0,'SECTION') + G(2,'TABLES');
-
-  // LTYPE table
-  d += G(0,'TABLE') + G(2,'LTYPE') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,1);
-  d += G(0,'LTYPE') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbLinetypeTableRecord');
-  d += G(2,'CONTINUOUS') + G(70,0) + G(3,'Solid line') + G(72,65) + G(73,0) + G(40,'0.0');
-  d += G(0,'ENDTAB');
-
-  // LAYER table
-  const layerH = H(), labelsH = H();
-  d += G(0,'TABLE') + G(2,'LAYER') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,2);
-  // Sloj za konture parcele (zelena = 3)
-  d += G(0,'LAYER') + G(5,layerH) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbLayerTableRecord');
-  d += G(2,layerName) + G(70,0) + G(62,3) + G(6,'CONTINUOUS');
-  // Sloj za labele (bijela = 7)
-  d += G(0,'LAYER') + G(5,labelsH) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbLayerTableRecord');
-  d += G(2,'LABELS') + G(70,0) + G(62,7) + G(6,'CONTINUOUS');
-  d += G(0,'ENDTAB');
-
-  // STYLE table (potreban za TEXT entitet)
-  d += G(0,'TABLE') + G(2,'STYLE') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,1);
-  d += G(0,'STYLE') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbTextStyleTableRecord');
-  d += G(2,'STANDARD') + G(70,0) + G(40,'0.0') + G(41,'1.0') + G(50,'0.0') + G(71,0) + G(42,'2.5') + G(3,'txt') + G(4,'');
-  d += G(0,'ENDTAB');
-
-  // BLOCK_RECORD table (obavezna u AC1015)
-  d += G(0,'TABLE') + G(2,'BLOCK_RECORD') + G(5,H()) + G(100,'AcDbSymbolTable') + G(70,2);
-  d += G(0,'BLOCK_RECORD') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbBlockTableRecord') + G(2,'*Model_Space');
-  d += G(0,'BLOCK_RECORD') + G(5,H()) + G(100,'AcDbSymbolTableRecord') + G(100,'AcDbBlockTableRecord') + G(2,'*Paper_Space');
-  d += G(0,'ENDTAB');
-
-  d += G(0,'ENDSEC');
-
-  // ── BLOCKS ────────────────────────────────────────────────────────────────
-  d += G(0,'SECTION') + G(2,'BLOCKS');
-  // *Model_Space blok (obavezan)
-  d += G(0,'BLOCK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0');
-  d += G(100,'AcDbBlockBegin') + G(2,'*Model_Space') + G(70,0);
-  d += G(10,'0.0') + G(20,'0.0') + G(30,'0.0') + G(3,'*Model_Space') + G(1,'');
-  d += G(0,'ENDBLK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0') + G(100,'AcDbBlockEnd');
-  // *Paper_Space blok (obavezan u AC1015)
-  d += G(0,'BLOCK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0');
-  d += G(100,'AcDbBlockBegin') + G(2,'*Paper_Space') + G(70,0);
-  d += G(10,'0.0') + G(20,'0.0') + G(30,'0.0') + G(3,'*Paper_Space') + G(1,'');
-  d += G(0,'ENDBLK') + G(5,H()) + G(100,'AcDbEntity') + G(8,'0') + G(100,'AcDbBlockEnd');
-  d += G(0,'ENDSEC');
-
-  // ── ENTITIES ──────────────────────────────────────────────────────────────
-  d += G(0,'SECTION') + G(2,'ENTITIES');
-
-  polygons.forEach(({ points, label }) => {
-    // LWPOLYLINE — zatvorena kontura parcele
-    d += G(0,'LWPOLYLINE');
-    d += G(5,H());
-    d += G(100,'AcDbEntity');
-    d += G(8,layerName);
-    d += G(100,'AcDbPolyline');
-    d += G(90,points.length);   // broj tačaka
-    d += G(70,1);                // 1 = zatvorena
-    d += G(43,'0.0');            // konstantna širina
-    points.forEach(([x, y]) => {
-      d += G(10, x.toFixed(3));
-      d += G(20, y.toFixed(3));
-    });
-
-    // TEXT labela u centroidu poligona
-    if (label) {
-      const cx = (points.reduce((s,[x])=>s+x, 0) / points.length).toFixed(3);
-      const cy = (points.reduce((s,[,y])=>s+y, 0) / points.length).toFixed(3);
-      d += G(0,'TEXT');
-      d += G(5,H());
-      d += G(100,'AcDbEntity');
-      d += G(8,'LABELS');
-      d += G(100,'AcDbText');
-      d += G(10,cx) + G(20,cy) + G(30,'0.0');  // insertion point
-      d += G(40, txtH.toFixed(3));               // visina teksta
-      d += G(1,label);                           // sadržaj
-      d += G(7,'STANDARD');                      // stil fonta
-      d += G(72,1);                              // horizontalno: centar
-      d += G(11,cx) + G(21,cy) + G(31,'0.0');   // alignment point
-      d += G(100,'AcDbText');                    // drugi AcDbText (obavezan za AC1015 justify)
-      d += G(73,2);                              // vertikalno: middle
-    }
-  });
-
-  d += G(0,'ENDSEC');
-  d += G(0,'EOF');
-  return d;
-}
-
 
 </script>
 </body>
