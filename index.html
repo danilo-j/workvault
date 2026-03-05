@@ -1000,9 +1000,32 @@ select option{background:white}textarea{resize:vertical;min-height:65px}
       <div><b>Parcele:</b> <span id="ek-import-parcele"></span></div>
       <div><b>Objekti:</b> <span id="ek-import-objekti"></span></div>
     </div>
+
+    <!-- Opcije preuzimanja -->
+    <div style="margin-top:14px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Opcije preuzimanja</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:500;letter-spacing:0">
+          <input type="checkbox" id="ek-opt-spisak" checked style="width:auto;margin:0;width:16px;height:16px;cursor:pointer">
+          <span>📋 Generiši Spisak prijava (.xlsx)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:500;letter-spacing:0">
+          <input type="checkbox" id="ek-opt-dxf" style="width:auto;margin:0;width:16px;height:16px;cursor:pointer">
+          <span>📐 Preuzmi DXF (GK koordinate)</span>
+          <span id="ek-dxf-status" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text2);font-weight:500;letter-spacing:0">
+          <input type="checkbox" id="ek-opt-ortofoto" style="width:auto;margin:0;width:16px;height:16px;cursor:pointer">
+          <span>🛰 Preuzmi ortofoto (.png)</span>
+          <span id="ek-ortofoto-status" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
+        </label>
+      </div>
+      <div id="ek-server-needed" style="display:none;margin-top:8px;font-size:11px;color:var(--amber)">⚠ DXF i ortofoto zahtijevaju aktivni lokalni server</div>
+    </div>
+
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-ekatastar-import')">Otkaži</button>
-      <button class="btn btn-primary" onclick="downloadSpisak()">⬇ Generiši Spisak prijava (.xlsx)</button>
+      <button class="btn btn-primary" id="btn-ek-import-confirm" onclick="ekImportConfirm()">⬇ Preuzmi odabrano</button>
     </div>
   </div>
 </div>
@@ -2921,8 +2944,160 @@ function importEKatastarData(data) {
       `Zgr.${o.redniBroj||''}${o.pd?' PD'+o.pd:''}: ${o.nacinKoriscenja} ${o.povrsina}m² (${o.spratnost||''})`
     ).join('<br>') || '—';
 
+  // Resetuj statuse
+  const dxfSt = document.getElementById('ek-dxf-status');
+  const ofSt  = document.getElementById('ek-ortofoto-status');
+  if (dxfSt) dxfSt.textContent = '';
+  if (ofSt)  ofSt.textContent  = '';
+
+  // Prikaži upozorenje ako server nije aktivan
+  const needServer = document.getElementById('ek-server-needed');
+  if (needServer) needServer.style.display = ekServerAvailable ? 'none' : 'block';
+
   window._ekatastarImportData = data;
   document.getElementById('modal-ekatastar-import').classList.add('open');
+}
+
+async function ekImportConfirm() {
+  const data = window._ekatastarImportData;
+  if (!data) return;
+
+  const wantSpisak   = document.getElementById('ek-opt-spisak')?.checked;
+  const wantDXF      = document.getElementById('ek-opt-dxf')?.checked;
+  const wantOrtofoto = document.getElementById('ek-opt-ortofoto')?.checked;
+
+  if (!wantSpisak && !wantDXF && !wantOrtofoto) {
+    toast('Odaberite barem jednu opciju', 'red'); return;
+  }
+
+  const btn = document.getElementById('btn-ek-import-confirm');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Preuzimam...'; }
+
+  const tasks = [];
+
+  // Spisak prijava
+  if (wantSpisak) {
+    tasks.push(
+      generateSpisakPrijava(data).catch(e => toast('Spisak greška: ' + e.message, 'red'))
+    );
+  }
+
+  // DXF — potreban je server i parcela
+  if (wantDXF) {
+    const dxfSt = document.getElementById('ek-dxf-status');
+    if (!ekServerAvailable) {
+      if (dxfSt) dxfSt.textContent = '❌ server nije aktivan';
+    } else if (!data.parcela_pretrage && !(data.parcele && data.parcele[0])) {
+      if (dxfSt) dxfSt.textContent = '❌ nema broja parcele';
+    } else {
+      const parcela = data.parcela_pretrage || (data.parcele[0].broj + (data.parcele[0].podbroj && data.parcele[0].podbroj!='0' ? '/'+data.parcele[0].podbroj : ''));
+      if (dxfSt) dxfSt.textContent = '⏳';
+      tasks.push(
+        _downloadDXFForData(data.ko, parcela)
+          .then(() => { if (dxfSt) dxfSt.textContent = '✓'; })
+          .catch(e => { if (dxfSt) dxfSt.textContent = '❌ ' + e.message; toast('DXF greška: ' + e.message, 'red'); })
+      );
+    }
+  }
+
+  // Ortofoto
+  if (wantOrtofoto) {
+    const ofSt = document.getElementById('ek-ortofoto-status');
+    if (!ekServerAvailable) {
+      if (ofSt) ofSt.textContent = '❌ server nije aktivan';
+    } else if (!data.parcela_pretrage && !(data.parcele && data.parcele[0])) {
+      if (ofSt) ofSt.textContent = '❌ nema broja parcele';
+    } else {
+      const parcela = data.parcela_pretrage || (data.parcele[0].broj + (data.parcele[0].podbroj && data.parcele[0].podbroj!='0' ? '/'+data.parcele[0].podbroj : ''));
+      if (ofSt) ofSt.textContent = '⏳';
+      tasks.push(
+        _downloadOrtofotoForData(data.ko, parcela)
+          .then(() => { if (ofSt) ofSt.textContent = '✓'; })
+          .catch(e => { if (ofSt) ofSt.textContent = '❌ ' + e.message; toast('Ortofoto greška: ' + e.message, 'red'); })
+      );
+    }
+  }
+
+  await Promise.all(tasks);
+
+  if (btn) { btn.disabled = false; btn.textContent = '⬇ Preuzmi odabrano'; }
+
+  // Zatvori modal ako nema čekanja (ako nije samo otvoren upload dialog)
+  if (!window._pendingSpisakData) {
+    closeModal('modal-ekatastar-import');
+  }
+}
+
+// Interna DXF funkcija (bez event.target)
+async function _downloadDXFForData(ko, parcela) {
+  const r = await fetch(EK_SERVER + '/geojson', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ko, parcela }),
+    signal: AbortSignal.timeout(30000)
+  });
+  const data = await r.json();
+  if (!data.ok) throw new Error(data.error || 'Greška servera');
+  const geojson = data.geojson;
+  if (!geojson.features || !geojson.features.length) throw new Error('Parcela nije pronađena');
+
+  const polygons = [];
+  let zone = 7;
+  geojson.features.forEach(feat => {
+    const geom = feat.geometry;
+    if (!geom) return;
+    const processRing = (ring) => {
+      const { points, zone: z } = transformCoords(ring);
+      zone = z; return points;
+    };
+    if (geom.type === 'Polygon') {
+      polygons.push({ points: processRing(geom.coordinates[0]), label: `KP ${parcela}` });
+    } else if (geom.type === 'MultiPolygon') {
+      geom.coordinates.forEach((poly, i) => {
+        polygons.push({ points: processRing(poly[0]), label: `KP ${parcela}${i > 0 ? ' (' + (i+1) + ')' : ''}` });
+      });
+    }
+  });
+  if (!polygons.length) throw new Error('Nema poligona u geometriji');
+
+  const layerName = `KP_${parcela}_KO_${ko}`.replace(/[^a-zA-Z0-9_]/g, '_');
+  const dxf = buildDXF(polygons, layerName);
+  const safe = (ko + '_' + parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fname = `KP_${safe}_GK${zone}.dxf`;
+  const blob = new Blob([dxf], { type: 'application/dxf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`✓ DXF preuzet: ${fname}`, 'green');
+}
+
+// Interna ortofoto funkcija
+async function _downloadOrtofotoForData(ko, parcela) {
+  const r = await fetch(EK_SERVER + '/ortofoto', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ko, parcela, headless: true }),
+    signal: AbortSignal.timeout(120000)
+  });
+  const data = await r.json();
+  if (!data.ok) throw new Error(data.error || 'Greška servera');
+
+  const safe = (ko + '_' + parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fname = `ortofoto_${safe}.png`;
+  const byteChars = atob(data.image_b64);
+  const byteArr = new Uint8Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([byteArr], { type: 'image/png' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast(`✓ Ortofoto preuzet: ${fname}`, 'green');
 }
 
 async function downloadSpisak() {
@@ -3251,30 +3426,7 @@ async function preuzmiOrtofoto(evId) {
   btn.textContent = '⏳';
 
   try {
-    const r = await fetch(EK_SERVER + '/ortofoto', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ko: ev.ko, parcela: ev.parcela, headless: true }),
-      signal: AbortSignal.timeout(120000)
-    });
-    const data = await r.json();
-    if (!data.ok) throw new Error(data.error || 'Greška servera');
-
-    // Otvori sliku u novom tabu + link za download
-    const win = window.open('', '_blank');
-    const safe = (ev.ko + '_' + ev.parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
-    win.document.write(`<!DOCTYPE html><html><head><title>Ortofoto ${ev.parcela} ${ev.ko}</title></head>
-      <body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center">
-        <div style="padding:10px;background:#222;width:100%;display:flex;gap:10px;align-items:center">
-          <span style="color:#fff;font-size:13px">KP ${ev.parcela} · KO ${ev.ko}</span>
-          <a href="data:image/png;base64,${data.image_b64}"
-             download="ortofoto_${safe}.png"
-             style="background:#1565c0;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-size:12px">⬇ Preuzmi PNG</a>
-        </div>
-        <img src="data:image/png;base64,${data.image_b64}" style="max-width:100%;height:auto">
-      </body></html>`);
-    win.document.close();
-    toast('✓ Ortofoto spreman', 'green');
+    await _downloadOrtofotoForData(ev.ko, ev.parcela);
   } catch (err) {
     toast('Ortofoto greška: ' + err.message, 'red');
   } finally {
@@ -3419,25 +3571,46 @@ function buildDXF(polygons, layerName) {
   const R = (s) => s + NL;  // record helper
 
   let d = '';
+  // Compute extents
+  let allPts = polygons.flatMap(p => p.points);
+  let xs = allPts.map(p=>p[0]), ys = allPts.map(p=>p[1]);
+  let xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
   // HEADER
   d += R('0') + R('SECTION') + R('2') + R('HEADER');
   d += R('9') + R('$ACADVER') + R('1') + R('AC1015');
   d += R('9') + R('$INSUNITS') + R('70') + R('6');
+  d += R('9') + R('$EXTMIN') + R('10') + R(xmin.toFixed(3)) + R('20') + R(ymin.toFixed(3)) + R('30') + R('0.0');
+  d += R('9') + R('$EXTMAX') + R('10') + R(xmax.toFixed(3)) + R('20') + R(ymax.toFixed(3)) + R('30') + R('0.0');
+  d += R('9') + R('$LIMMIN') + R('10') + R(xmin.toFixed(3)) + R('20') + R(ymin.toFixed(3));
+  d += R('9') + R('$LIMMAX') + R('10') + R(xmax.toFixed(3)) + R('20') + R(ymax.toFixed(3));
   d += R('0') + R('ENDSEC');
   // TABLES
   d += R('0') + R('SECTION') + R('2') + R('TABLES');
   d += R('0') + R('TABLE') + R('2') + R('LAYER') + R('70') + R('2');
   d += R('0') + R('LAYER') + R('2') + R(layerName) + R('70') + R('0') + R('62') + R('3') + R('6') + R('CONTINUOUS');
   d += R('0') + R('LAYER') + R('2') + R('LABELS') + R('70') + R('0') + R('62') + R('7') + R('6') + R('CONTINUOUS');
-  d += R('0') + R('ENDTAB') + R('0') + R('ENDSEC');
+  d += R('0') + R('ENDTAB');
+  d += R('0') + R('TABLE') + R('2') + R('LTYPE') + R('70') + R('1');
+  d += R('0') + R('LTYPE') + R('2') + R('CONTINUOUS') + R('70') + R('0') + R('3') + R('Solid line') + R('72') + R('65') + R('73') + R('0') + R('40') + R('0.0');
+  d += R('0') + R('ENDTAB');
+  d += R('0') + R('ENDSEC');
+  // BLOCKS (required in AC1015)
+  d += R('0') + R('SECTION') + R('2') + R('BLOCKS');
+  d += R('0') + R('BLOCK') + R('8') + R('0') + R('2') + R('*Model_Space') + R('70') + R('0') + R('10') + R('0.0') + R('20') + R('0.0') + R('30') + R('0.0') + R('3') + R('*Model_Space') + R('1') + R('');
+  d += R('0') + R('ENDBLK') + R('8') + R('0');
+  d += R('0') + R('ENDSEC');
   // ENTITIES
   d += R('0') + R('SECTION') + R('2') + R('ENTITIES');
 
   polygons.forEach(({ points, label }) => {
     d += R('0') + R('LWPOLYLINE');
+    d += R('5') + R(Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase());
+    d += R('100') + R('AcDbEntity');
     d += R('8') + R(layerName);
-    d += R('70') + R('1');
+    d += R('100') + R('AcDbPolyline');
     d += R('90') + R(String(points.length));
+    d += R('70') + R('1');
+    d += R('43') + R('0.0');
     points.forEach(([x, y]) => {
       d += R('10') + R(x.toFixed(3));
       d += R('20') + R(y.toFixed(3));
@@ -3446,13 +3619,20 @@ function buildDXF(polygons, layerName) {
       const cx = points.reduce((s,[x])=>s+x,0)/points.length;
       const cy = points.reduce((s,[,y])=>s+y,0)/points.length;
       d += R('0') + R('TEXT');
+      d += R('5') + R(Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase());
+      d += R('100') + R('AcDbEntity');
       d += R('8') + R('LABELS');
+      d += R('100') + R('AcDbText');
       d += R('10') + R(cx.toFixed(3));
       d += R('20') + R(cy.toFixed(3));
       d += R('30') + R('0.0');
       d += R('40') + R('2.0');
       d += R('1') + R(label);
       d += R('72') + R('1');
+      d += R('11') + R(cx.toFixed(3));
+      d += R('21') + R(cy.toFixed(3));
+      d += R('31') + R('0.0');
+      d += R('100') + R('AcDbText');
     }
   });
 
@@ -3473,70 +3653,7 @@ async function preuzmiDXF(evId) {
   toast('📐 Dohvatam geometriju...', 'blue');
 
   try {
-    // 1. Dohvati GeoJSON sa servera
-    const r = await fetch(EK_SERVER + '/geojson', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ko: ev.ko, parcela: ev.parcela }),
-      signal: AbortSignal.timeout(30000)
-    });
-    const data = await r.json();
-    if (!data.ok) throw new Error(data.error || 'Greška servera');
-
-    const geojson = data.geojson;
-    if (!geojson.features || !geojson.features.length)
-      throw new Error('Parcela nije pronađena');
-
-    // 2. Transformiši koordinate UTM34N → GK
-    const polygons = [];
-    let zone = 7;
-
-    geojson.features.forEach(feat => {
-      const geom = feat.geometry;
-      if (!geom) return;
-
-      const processRing = (ring) => {
-        const { points, zone: z } = transformCoords(ring);
-        zone = z;
-        return points;
-      };
-
-      if (geom.type === 'Polygon') {
-        polygons.push({
-          points: processRing(geom.coordinates[0]),
-          label: `KP ${ev.parcela}`
-        });
-      } else if (geom.type === 'MultiPolygon') {
-        geom.coordinates.forEach((poly, i) => {
-          polygons.push({
-            points: processRing(poly[0]),
-            label: `KP ${ev.parcela}${i > 0 ? ' (' + (i+1) + ')' : ''}`
-          });
-        });
-      }
-    });
-
-    if (!polygons.length) throw new Error('Nema poligona u geometriji');
-
-    toast(`📐 Transformišem u GK${zone}...`, 'blue');
-
-    // 3. Generiši DXF
-    const layerName = `KP_${ev.parcela}_KO_${ev.ko}`.replace(/[^a-zA-Z0-9_]/g, '_');
-    const dxf = buildDXF(polygons, layerName);
-
-    // 4. Download
-    const safe = (ev.ko + '_' + ev.parcela).replace(/[^a-zA-Z0-9_-]/g, '_');
-    const fname = `KP_${safe}_GK${zone}.dxf`;
-    const blob = new Blob([dxf], { type: 'application/dxf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = fname;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast(`✓ DXF preuzet: ${fname}  (GK${zone})`, 'green');
-
+    await _downloadDXFForData(ev.ko, ev.parcela);
   } catch (err) {
     toast('DXF greška: ' + err.message, 'red');
   } finally {
