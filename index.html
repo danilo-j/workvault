@@ -3411,115 +3411,51 @@ function transformCoords(coords) {
 
 // ── DXF generator ─────────────────────────────────────────────────────────────
 function buildDXF(polygons, layerName) {
-  // polygons: array of { points: [[x,y],...], label: string }
-  // Vraća DXF string sa LWPOLYLINE entitetima
+  // Generiši DXF R2000 sa LWPOLYLINE entitetima
+  // Koristimo \r\n kao separator (DXF standard)
+  const NL = '\r\n';
+  const R = (s) => s + NL;  // record helper
 
-  const lines = [];
-
+  let d = '';
   // HEADER
-  lines.push('0
-SECTION
-2
-HEADER');
-  lines.push('9
-$ACADVER
-1
-AC1015');
-  lines.push('9
-$INSUNITS
-70
-6'); // 6 = metri
-  lines.push('0
-ENDSEC');
-
+  d += R('0') + R('SECTION') + R('2') + R('HEADER');
+  d += R('9') + R('$ACADVER') + R('1') + R('AC1015');
+  d += R('9') + R('$INSUNITS') + R('70') + R('6');
+  d += R('0') + R('ENDSEC');
   // TABLES
-  lines.push('0
-SECTION
-2
-TABLES');
-  lines.push('0
-TABLE
-2
-LAYER
-70
-2');
-  lines.push(`0
-LAYER
-2
-${layerName}
-70
-0
-62
-3
-6
-CONTINUOUS`);
-  lines.push('0
-LAYER
-2
-LABELS
-70
-0
-62
-7
-6
-CONTINUOUS');
-  lines.push('0
-ENDTAB
-0
-ENDSEC');
-
+  d += R('0') + R('SECTION') + R('2') + R('TABLES');
+  d += R('0') + R('TABLE') + R('2') + R('LAYER') + R('70') + R('2');
+  d += R('0') + R('LAYER') + R('2') + R(layerName) + R('70') + R('0') + R('62') + R('3') + R('6') + R('CONTINUOUS');
+  d += R('0') + R('LAYER') + R('2') + R('LABELS') + R('70') + R('0') + R('62') + R('7') + R('6') + R('CONTINUOUS');
+  d += R('0') + R('ENDTAB') + R('0') + R('ENDSEC');
   // ENTITIES
-  lines.push('0
-SECTION
-2
-ENTITIES');
+  d += R('0') + R('SECTION') + R('2') + R('ENTITIES');
 
   polygons.forEach(({ points, label }) => {
-    // LWPOLYLINE
-    lines.push('0
-LWPOLYLINE');
-    lines.push(`8
-${layerName}`);    // layer
-    lines.push('70
-1');              // closed
-    lines.push(`90
-${points.length}`);
+    d += R('0') + R('LWPOLYLINE');
+    d += R('8') + R(layerName);
+    d += R('70') + R('1');
+    d += R('90') + R(String(points.length));
     points.forEach(([x, y]) => {
-      lines.push(`10
-${x.toFixed(3)}`);
-      lines.push(`20
-${y.toFixed(3)}`);
+      d += R('10') + R(x.toFixed(3));
+      d += R('20') + R(y.toFixed(3));
     });
-
-    // TEXT label (centroid)
     if (label) {
       const cx = points.reduce((s,[x])=>s+x,0)/points.length;
       const cy = points.reduce((s,[,y])=>s+y,0)/points.length;
-      lines.push('0
-TEXT');
-      lines.push('8
-LABELS');
-      lines.push(`10
-${cx.toFixed(3)}`);
-      lines.push(`20
-${cy.toFixed(3)}`);
-      lines.push('30
-0.0');
-      lines.push('40
-2.0');   // visina teksta 2m
-      lines.push(`1
-${label}`);
-      lines.push('72
-1');     // horizontalno centriranje
+      d += R('0') + R('TEXT');
+      d += R('8') + R('LABELS');
+      d += R('10') + R(cx.toFixed(3));
+      d += R('20') + R(cy.toFixed(3));
+      d += R('30') + R('0.0');
+      d += R('40') + R('2.0');
+      d += R('1') + R(label);
+      d += R('72') + R('1');
     }
   });
 
-  lines.push('0
-ENDSEC
-0
-EOF');
-  return lines.join('
-');
+  d += R('0') + R('ENDSEC') + R('0') + R('EOF');
+  return d;
 }
 
 // ── Glavni DXF export ──────────────────────────────────────────────────────────
